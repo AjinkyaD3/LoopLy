@@ -15,13 +15,13 @@ import {
 export const dynamic = "force-dynamic";
 
 interface JoinPageProps {
-  params: {
+  params: Promise<{
     businessToken: string;
-  };
+  }>;
 }
 
 export default async function PublicJoinPage({ params }: JoinPageProps) {
-  const { businessToken } = params;
+  const { businessToken } = await params;
 
   if (!businessToken || !isValidBusinessToken(businessToken)) {
     return <NotFoundState />;
