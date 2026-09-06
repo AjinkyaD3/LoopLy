@@ -21,15 +21,16 @@ import {
 export const dynamic = "force-dynamic";
 
 interface Props {
-  params: { membershipId: string };
+  params: Promise<{ membershipId: string }>;
 }
 
 export default async function MembershipDetailPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user || user.role !== UserRole.CUSTOMER) redirect("/login");
+  const { membershipId } = await params;
 
   const membership = await prisma.membership.findUnique({
-    where: { id: params.membershipId },
+    where: { id: membershipId },
     include: {
       business: { include: { loyaltyProgram: true } },
       verificationRequests: {

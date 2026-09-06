@@ -18,11 +18,11 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { rewardId: string } }
+  { params }: { params: Promise<{ rewardId: string }> }
 ) {
   try {
     const user = await requireBusinessOwner();
-    const { rewardId } = params;
+    const { rewardId } = await params;
 
     if (!rewardId) {
       return NextResponse.json({ error: "Reward ID is required." }, { status: 400 });

@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { businessToken: string } }
+  { params }: { params: Promise<{ businessToken: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -34,7 +34,7 @@ export async function POST(
       );
     }
 
-    const { businessToken } = params;
+    const { businessToken } = await params;
     if (!businessToken || !isValidBusinessToken(businessToken)) {
       return NextResponse.json({ error: "Invalid business token." }, { status: 404 });
     }

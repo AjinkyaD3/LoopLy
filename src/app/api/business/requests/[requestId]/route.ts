@@ -27,11 +27,11 @@ export const dynamic = "force-dynamic";
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { requestId: string } }
+  { params }: { params: Promise<{ requestId: string }> }
 ) {
   try {
     const user = await requireBusinessOwner();
-    const { requestId } = params;
+    const { requestId } = await params;
 
     if (!requestId) {
       return NextResponse.json({ error: "Request ID is required." }, { status: 400 });

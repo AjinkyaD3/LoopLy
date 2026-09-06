@@ -6,10 +6,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { businessToken: string } }
+  { params }: { params: Promise<{ businessToken: string }> }
 ) {
   try {
-    const { businessToken } = params;
+    const { businessToken } = await params;
 
     // 1. Validate token format before querying database
     if (!businessToken || !isValidBusinessToken(businessToken)) {

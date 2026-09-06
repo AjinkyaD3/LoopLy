@@ -14,11 +14,11 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(
   _req: Request,
-  { params }: { params: { membershipId: string } }
+  { params }: { params: Promise<{ membershipId: string }> }
 ) {
   try {
     const user = await requireCustomer();
-    const { membershipId } = params;
+    const { membershipId } = await params;
 
     const membership = await prisma.membership.findUnique({
       where: { id: membershipId },
