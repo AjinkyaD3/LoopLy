@@ -440,10 +440,19 @@ export default async function Home() {
               Lightweight, mobile-first, multi-tenant loyalty platform for small businesses.
             </p>
           </div>
-          <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
-            <span>&copy; {new Date().getFullYear()} Looply. All rights reserved.</span>
-            <div className="flex items-center gap-4">
-              <Link href="/login" className="hover:text-slate-300 transition-colors">
+          <div className="border-t border-slate-800 pt-6 flex flex-col items-center justify-between text-xs text-slate-500 gap-4 sm:flex-row sm:gap-2">
+            <div className="text-center sm:text-left space-y-1">
+              <p>&copy; {new Date().getFullYear()} Astrix Technologies PVT LTD. All rights reserved.</p>
+              <p>Looply is a product of Astrix Technologies PVT LTD.</p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-4">
+              <Link href="/legal/terms" className="hover:text-slate-400 transition-colors">
+                Terms &amp; Conditions
+              </Link>
+              <Link href="/legal/privacy" className="hover:text-slate-400 transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/login" className="hover:text-slate-300 transition-colors ml-0 sm:ml-2">
                 Sign In
               </Link>
               <Link href="/register" className="hover:text-slate-300 transition-colors">

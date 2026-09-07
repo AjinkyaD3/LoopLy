@@ -18,6 +18,8 @@ function RegisterForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [acceptPrivacy, setAcceptPrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +32,7 @@ function RegisterForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, acceptTerms, acceptPrivacy }),
       });
 
       const data = await res.json();
@@ -155,9 +157,49 @@ function RegisterForm() {
             />
           </div>
 
+          <div className="space-y-3 pt-2 pb-2">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <div className="flex items-center h-5">
+                <input
+                  type="checkbox"
+                  required
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-indigo-600 focus:ring-2"
+                />
+              </div>
+              <div className="text-xs text-slate-600 leading-snug">
+                I agree to the{" "}
+                <Link href="/legal/terms" target="_blank" className="font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-2">
+                  Terms &amp; Conditions
+                </Link>
+                . <span className="text-rose-500">*</span>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <div className="flex items-center h-5">
+                <input
+                  type="checkbox"
+                  required
+                  checked={acceptPrivacy}
+                  onChange={(e) => setAcceptPrivacy(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 bg-white border-slate-300 rounded focus:ring-indigo-600 focus:ring-2"
+                />
+              </div>
+              <div className="text-xs text-slate-600 leading-snug">
+                I acknowledge the{" "}
+                <Link href="/legal/privacy" target="_blank" className="font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-2">
+                  Privacy Policy
+                </Link>
+                . <span className="text-rose-500">*</span>
+              </div>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !acceptTerms || !acceptPrivacy}
             className="w-full mt-2 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-sm rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {loading ? (

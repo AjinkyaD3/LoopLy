@@ -35,6 +35,12 @@ export const UserRegistrationSchema = z.object({
     .max(100, "Name must be less than 100 characters")
     .trim(),
   role: UserRoleSchema.default("CUSTOMER"),
+  acceptTerms: z.literal(true, {
+    errorMap: () => ({ message: "You must accept the Terms & Conditions." }),
+  }),
+  acceptPrivacy: z.literal(true, {
+    errorMap: () => ({ message: "You must acknowledge the Privacy Policy." }),
+  }),
 });
 
 export const UserLoginSchema = z.object({

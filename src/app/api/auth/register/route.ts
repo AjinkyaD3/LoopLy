@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UserRegistrationSchema } from "@/lib/validations";
 import { hashPassword, createSession, getSessionCookieOptions } from "@/lib/auth";
+import { LEGAL_VERSIONS } from "@/lib/constants";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const { name, email, password, role } = parsed.data;
+    const { name, email, password, role, acceptTerms, acceptPrivacy } = parsed.data;
 
     // 3. Normalize email: lowercase & trimmed
     const normalizedEmail = email.trim().toLowerCase();
@@ -51,6 +52,15 @@ export async function POST(request: NextRequest) {
         email: normalizedEmail,
         passwordHash,
         role,
+        legalAcceptances: {
+          create: {
+            termsVersion: LEGAL_VERSIONS.terms,
+            termsAcceptedAt: new Date(),
+            privacyVersion: LEGAL_VERSIONS.privacy,
+            privacyAcceptedAt: new Date(),
+            accountRole: role,
+          },
+        },
       },
       select: {
         id: true,

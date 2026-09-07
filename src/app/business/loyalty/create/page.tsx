@@ -264,7 +264,7 @@ export default function CreateLoyaltyProgramPage() {
                         <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
                         Visit Confirmation
                       </span>
-                      <p className="text-slate-500 leading-relaxed text-[11px]">Customer says &quot;I'm Visiting Today&quot;. You approve the visit.</p>
+                      <p className="text-slate-500 leading-relaxed text-[11px]">Customer says &quot;I&apos;m Visiting Today&quot;. You approve the visit.</p>
                     </div>
                   </label>
                   <label className={`p-3.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-colors ${verificationMethod === VerificationMethod.BILL ? "bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200" : "bg-white border-slate-200 hover:bg-slate-50"}`}>

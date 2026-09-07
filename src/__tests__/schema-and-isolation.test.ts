@@ -68,6 +68,8 @@ describe("Domain Enums and Constraints Validation", () => {
       password: "StrongPassword123!",
       name: "Jane Doe",
       role: "CUSTOMER",
+      acceptTerms: true,
+      acceptPrivacy: true,
     });
     expect(valid.success).toBe(true);
 
@@ -75,8 +77,22 @@ describe("Domain Enums and Constraints Validation", () => {
       email: "test@example.com",
       password: "short",
       name: "Jane",
+      acceptTerms: true,
+      acceptPrivacy: true,
     });
     expect(invalidPassword.success).toBe(false);
+
+    const missingConsent = UserRegistrationSchema.safeParse({
+      email: "test2@example.com",
+      password: "StrongPassword123!",
+      name: "John Doe",
+      role: "CUSTOMER",
+    });
+    expect(missingConsent.success).toBe(false);
+    if (!missingConsent.success) {
+      expect(missingConsent.error.errors.some(e => e.path.includes("acceptTerms"))).toBe(true);
+      expect(missingConsent.error.errors.some(e => e.path.includes("acceptPrivacy"))).toBe(true);
+    }
   });
 
   it("validates Loyalty Program configuration constraints", () => {

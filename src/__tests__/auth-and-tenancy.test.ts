@@ -15,6 +15,8 @@ import {
 } from "../lib/auth";
 import { UserRole } from "@prisma/client";
 import { checkRateLimit, resetRateLimit } from "../lib/rate-limit";
+import { POST as registerHandler } from "../app/api/auth/register/route";
+import { NextRequest } from "next/server";
 
 describe("Password Hashing & Security", () => {
   it("hashes password with bcrypt so plaintext is never stored", async () => {
@@ -55,6 +57,11 @@ describe("Authentication & Registration Logic", () => {
         where: { id: { in: [businessAId, businessBId].filter(Boolean) } },
       });
     }
+    await prisma.legalAcceptance.deleteMany({
+      where: {
+        userId: { in: [createdCustomerId, createdOwnerAId, createdOwnerBId].filter(Boolean) },
+      },
+    });
     await prisma.user.deleteMany({
       where: {
         id: { in: [createdCustomerId, createdOwnerAId, createdOwnerBId].filter(Boolean) },
@@ -62,24 +69,56 @@ describe("Authentication & Registration Logic", () => {
     });
   });
 
-  it("registers a customer with role CUSTOMER and normalized email", async () => {
-    const rawEmail = "  " + testCustomerEmail.toUpperCase() + " ";
-    const normalized = rawEmail.trim().toLowerCase();
-    const passwordHash = await hashPassword("ValidPass123!");
-
-    const user = await prisma.user.create({
-      data: {
-        email: normalized,
+  it("registers a customer via API with consent, creating legal acceptances", async () => {
+    const req = new NextRequest("http://localhost:3000/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        email: testCustomerEmail,
+        password: "ValidPass123!",
         name: "Test Customer",
-        passwordHash,
         role: UserRole.CUSTOMER,
-      },
+        acceptTerms: true,
+        acceptPrivacy: true,
+      }),
     });
+    
+    const res = await registerHandler(req);
+    expect(res.status).toBe(201);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    
+    createdCustomerId = data.user.id;
+    expect(data.user.role).toBe(UserRole.CUSTOMER);
+    expect(data.user.email).toBe(testCustomerEmail.toLowerCase());
 
-    createdCustomerId = user.id;
-    expect(user.role).toBe(UserRole.CUSTOMER);
-    expect(user.email).toBe(normalized);
-    expect(user.passwordHash).not.toBe("ValidPass123!");
+    // Verify Legal Acceptance was created
+    const acceptances = await prisma.legalAcceptance.findMany({
+      where: { userId: createdCustomerId }
+    });
+    expect(acceptances.length).toBe(1);
+    expect(acceptances[0].termsVersion).toBe("v1.0");
+    expect(acceptances[0].privacyVersion).toBe("v1.0");
+    expect(acceptances[0].accountRole).toBe(UserRole.CUSTOMER);
+    expect(acceptances[0].termsAcceptedAt).toBeDefined();
+    expect(acceptances[0].privacyAcceptedAt).toBeDefined();
+  });
+
+  it("rejects registration if consent is missing", async () => {
+    const req = new NextRequest("http://localhost:3000/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        email: "no.consent@example.test",
+        password: "ValidPass123!",
+        name: "No Consent",
+        role: UserRole.CUSTOMER,
+        // missing acceptTerms and acceptPrivacy
+      }),
+    });
+    
+    const res = await registerHandler(req);
+    expect(res.status).toBe(400);
+    const data = await res.json();
+    expect(data.error).toBeDefined();
   });
 
   it("rejects duplicate email registrations", async () => {

@@ -72,6 +72,8 @@ model User {
   rewards              Reward[]
   // Rewards redeemed by this business owner (audit trail)
   redeemedRewards      Reward[]              @relation("RedeemedBy")
+  // Legal acceptances (Terms, Privacy)
+  legalAcceptances     LegalAcceptance[]
 
   @@index([role])
 }
@@ -86,6 +88,24 @@ model Session {
 
   @@index([userId])
   @@index([sessionToken])
+}
+
+// -----------------------------------------------------------------------------
+// LEGAL CONSENT
+// -----------------------------------------------------------------------------
+
+model LegalAcceptance {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  termsVersion      String
+  termsAcceptedAt   DateTime
+  privacyVersion    String
+  privacyAcceptedAt DateTime
+  accountRole       UserRole
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
 }
 
 // -----------------------------------------------------------------------------
