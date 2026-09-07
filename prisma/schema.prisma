@@ -98,10 +98,13 @@ model Business {
   // Permanent unique public QR token used in /join/{businessToken}
   businessToken String   @unique
   ownerId       String   @unique
-  owner         User     @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  owner         User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   
   googleReviewUrl String?
   instagramHandle String?
+  youtubeHandle   String?
+  address         String?
+  businessType    String?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

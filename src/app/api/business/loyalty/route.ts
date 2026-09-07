@@ -1,52 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+import { requireOwnerBusiness } from "@/lib/auth";
 import { LoyaltyProgramSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
-/**
- * PUT /api/business/loyalty
- * Updates the loyalty program for the authenticated Business Owner.
- * Strict ownership isolation: resolves business via Business.ownerId === user.id.
- * Never accepts a client-provided businessId.
- * Never modifies Business.id, Business.ownerId, or Business.businessToken.
- * Never alters existing memberships, visits, or rewards.
- */
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    // 1. Authenticate Business Owner
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (user.role !== UserRole.BUSINESS_OWNER) {
-      return NextResponse.json(
-        { error: "Forbidden: Only business owners can modify loyalty settings." },
-        { status: 403 }
-      );
+    const { business } = await requireOwnerBusiness();
+
+    if (business.loyaltyProgram) {
+      return NextResponse.json({ error: "Loyalty program already configured." }, { status: 409 });
     }
 
-    // 2. Resolve business strictly from authenticated owner ID
-    const business = await prisma.business.findUnique({
-      where: { ownerId: user.id },
-      include: { loyaltyProgram: true },
-    });
-
-    if (!business || !business.loyaltyProgram) {
-      return NextResponse.json(
-        { error: "No business configured for this owner." },
-        { status: 404 }
-      );
-    }
-
-    // 3. Validate request body
     const body = await request.json();
     const parsed = LoyaltyProgramSchema.safeParse(body);
     if (!parsed.success) {
-      const firstError = parsed.error.issues[0]?.message || "Invalid input";
-      return NextResponse.json({ error: firstError }, { status: 400 });
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
 
     const {
@@ -56,10 +26,59 @@ export async function PUT(request: NextRequest) {
       rewardDescription,
       rewardValidityDays,
       verificationMethod,
+      rewardType,
       isActive,
     } = parsed.data;
 
-    // 4. Update loyalty program (immutable business fields and customer memberships remain untouched)
+    const loyaltyProgram = await prisma.loyaltyProgram.create({
+      data: {
+        businessId: business.id,
+        programName,
+        requiredVisits,
+        rewardTitle,
+        rewardDescription,
+        rewardValidityDays,
+        verificationMethod,
+        rewardType,
+        isActive,
+      },
+    });
+
+    return NextResponse.json({ success: true, loyaltyProgram }, { status: 201 });
+  } catch (error: any) {
+    if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN_NOT_BUSINESS_OWNER" || error.message === "NO_OWNED_BUSINESS") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("Create loyalty program error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const { business } = await requireOwnerBusiness();
+
+    if (!business.loyaltyProgram) {
+      return NextResponse.json({ error: "No loyalty program configured." }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const parsed = LoyaltyProgramSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+    }
+
+    const {
+      programName,
+      requiredVisits,
+      rewardTitle,
+      rewardDescription,
+      rewardValidityDays,
+      verificationMethod,
+      rewardType,
+      isActive,
+    } = parsed.data;
+
     const updated = await prisma.loyaltyProgram.update({
       where: { id: business.loyaltyProgram.id },
       data: {
@@ -69,33 +88,44 @@ export async function PUT(request: NextRequest) {
         rewardDescription,
         rewardValidityDays,
         verificationMethod,
+        rewardType,
         isActive,
       },
     });
 
-    return NextResponse.json(
-      {
-        success: true,
-        loyaltyProgram: {
-          id: updated.id,
-          businessId: updated.businessId,
-          programName: updated.programName,
-          requiredVisits: updated.requiredVisits,
-          rewardTitle: updated.rewardTitle,
-          rewardDescription: updated.rewardDescription,
-          rewardValidityDays: updated.rewardValidityDays,
-          verificationMethod: updated.verificationMethod,
-          isActive: updated.isActive,
-          updatedAt: updated.updatedAt,
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error) {
+    return NextResponse.json({ success: true, loyaltyProgram: updated }, { status: 200 });
+  } catch (error: any) {
+    if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN_NOT_BUSINESS_OWNER" || error.message === "NO_OWNED_BUSINESS") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("Update loyalty program error:", error);
-    return NextResponse.json(
-      { error: "Failed to update loyalty program configuration." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { business } = await requireOwnerBusiness();
+
+    if (!business.loyaltyProgram) {
+      return NextResponse.json({ error: "No loyalty program configured." }, { status: 404 });
+    }
+
+    // In order to delete a loyalty program, we must use a transaction to safely wipe
+    // all associated Memberships for this business. This effectively removes all Visits, 
+    // VerificationRequests, and Rewards (which resolves the Restrict constraint).
+    await prisma.$transaction([
+      prisma.membership.deleteMany({ where: { businessId: business.id } }),
+      prisma.loyaltyProgram.delete({ where: { id: business.loyaltyProgram.id } }),
+    ]);
+
+    return NextResponse.json({ success: true, message: "Loyalty program deleted successfully" }, { status: 200 });
+  } catch (error: any) {
+    if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN_NOT_BUSINESS_OWNER" || error.message === "NO_OWNED_BUSINESS") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("Delete loyalty program error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+

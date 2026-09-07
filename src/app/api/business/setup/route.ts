@@ -43,59 +43,38 @@ export async function POST(request: NextRequest) {
 
     const {
       name,
-      programName,
-      requiredVisits,
-      rewardTitle,
-      rewardDescription,
-      rewardValidityDays,
-      verificationMethod,
-      rewardType,
+      address,
+      businessType,
       googleReviewUrl,
       instagramHandle,
+      youtubeHandle,
     } = parsed.data;
 
     // 4. Generate permanent unique businessToken
     const businessToken = generateBusinessToken(12);
 
-    // 5. Atomic transaction: create Business + LoyaltyProgram
-    const result = await prisma.$transaction(async (tx) => {
-      const business = await tx.business.create({
-        data: {
-          name,
-          businessToken,
-          ownerId: user.id,
-          googleReviewUrl: googleReviewUrl || null,
-          instagramHandle: instagramHandle || null,
-          loyaltyProgram: {
-            create: {
-              programName,
-              requiredVisits,
-              rewardTitle,
-              rewardDescription,
-              rewardValidityDays,
-              verificationMethod,
-              rewardType,
-              isActive: true,
-            },
-          },
-        },
-        include: {
-          loyaltyProgram: true,
-        },
-      });
-
-      return business;
+    // 5. Create Business (no loyalty program yet)
+    const business = await prisma.business.create({
+      data: {
+        name,
+        businessToken,
+        ownerId: user.id,
+        address: address || null,
+        businessType: businessType || null,
+        googleReviewUrl: googleReviewUrl || null,
+        instagramHandle: instagramHandle || null,
+        youtubeHandle: youtubeHandle || null,
+      },
     });
 
     return NextResponse.json(
       {
         success: true,
         business: {
-          id: result.id,
-          name: result.name,
-          businessToken: result.businessToken,
-          createdAt: result.createdAt,
-          loyaltyProgram: result.loyaltyProgram,
+          id: business.id,
+          name: business.name,
+          businessToken: business.businessToken,
+          createdAt: business.createdAt,
         },
       },
       { status: 201 }

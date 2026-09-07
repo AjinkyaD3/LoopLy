@@ -63,7 +63,9 @@ export default async function CustomerDashboardPage() {
               </Link>
             )}
             <div className="hidden md:flex flex-col text-right text-xs">
-              <span className="font-bold text-slate-900">{user.name}</span>
+              <Link href="/customer/settings" className="font-bold text-slate-900 hover:text-indigo-600 transition-colors">
+                {user.name}
+              </Link>
               <span className="text-[10px] text-slate-400">{user.email}</span>
             </div>
             <LogoutButton />

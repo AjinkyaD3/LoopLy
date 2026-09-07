@@ -93,16 +93,14 @@ describe("Phase 3 Checkpoint 1 — Backend Business Setup & APIs", () => {
     });
 
     it("rejects invalid requiredVisits (0 or negative or > 100)", () => {
-      const zero = BusinessSetupSchema.safeParse({
-        name: "Valid Name",
+      const zero = LoyaltyProgramSchema.safeParse({
         programName: "Club",
         requiredVisits: 0,
         rewardTitle: "Reward",
       });
       expect(zero.success).toBe(false);
 
-      const overHundred = BusinessSetupSchema.safeParse({
-        name: "Valid Name",
+      const overHundred = LoyaltyProgramSchema.safeParse({
         programName: "Club",
         requiredVisits: 101,
         rewardTitle: "Reward",
@@ -111,8 +109,7 @@ describe("Phase 3 Checkpoint 1 — Backend Business Setup & APIs", () => {
     });
 
     it("rejects invalid reward validity days (0 or > 365)", () => {
-      const zero = BusinessSetupSchema.safeParse({
-        name: "Valid Name",
+      const zero = LoyaltyProgramSchema.safeParse({
         programName: "Club",
         requiredVisits: 5,
         rewardTitle: "Reward",
@@ -120,8 +117,7 @@ describe("Phase 3 Checkpoint 1 — Backend Business Setup & APIs", () => {
       });
       expect(zero.success).toBe(false);
 
-      const overYear = BusinessSetupSchema.safeParse({
-        name: "Valid Name",
+      const overYear = LoyaltyProgramSchema.safeParse({
         programName: "Club",
         requiredVisits: 5,
         rewardTitle: "Reward",
@@ -131,8 +127,7 @@ describe("Phase 3 Checkpoint 1 — Backend Business Setup & APIs", () => {
     });
 
     it("rejects invalid verification method", () => {
-      const invalidMethod = BusinessSetupSchema.safeParse({
-        name: "Valid Name",
+      const invalidMethod = LoyaltyProgramSchema.safeParse({
         programName: "Club",
         requiredVisits: 5,
         rewardTitle: "Reward",
@@ -264,9 +259,11 @@ describe("Phase 3 Checkpoint 1 — Backend Business Setup & APIs", () => {
     });
 
     it("verifies immutable fields (id, ownerId, businessToken) cannot be updated via update schema", () => {
-      // BusinessUpdateSchema permits only `name`
+      // BusinessUpdateSchema permits only name and social links
       const keys = Object.keys(BusinessUpdateSchema.shape);
-      expect(keys).toEqual(["name"]);
+      expect(keys.includes("name")).toBe(true);
+      expect(keys.includes("googleReviewUrl")).toBe(true);
+      expect(keys.includes("instagramHandle")).toBe(true);
       expect(keys.includes("id")).toBe(false);
       expect(keys.includes("ownerId")).toBe(false);
       expect(keys.includes("businessToken")).toBe(false);

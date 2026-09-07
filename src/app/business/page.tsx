@@ -66,7 +66,9 @@ export default async function BusinessDashboardPage() {
 
           <div className="flex items-center gap-3">
             <div className="hidden md:flex flex-col text-right text-xs">
-              <span className="font-bold text-slate-900">{user.name}</span>
+              <Link href="/business/settings" className="font-bold text-slate-900 hover:text-indigo-600 transition-colors">
+                {user.name}
+              </Link>
               <span className="text-[10px] text-slate-400">{user.email}</span>
             </div>
             <LogoutButton />
@@ -110,7 +112,7 @@ export default async function BusinessDashboardPage() {
         )}
 
         {/* STATE 2: Configured Business Management Dashboard */}
-        {business && business.loyaltyProgram && (
+        {business && (
           <div className="space-y-6">
             {/* Owner Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
@@ -119,7 +121,7 @@ export default async function BusinessDashboardPage() {
                   {business.name}
                 </h1>
                 <p className="text-xs text-slate-500 mt-1">
-                  Manage your permanent QR code, loyalty program, and customer memberships.
+                  Manage your business profile and loyalty program.
                 </p>
               </div>
 
@@ -128,22 +130,49 @@ export default async function BusinessDashboardPage() {
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   Token: {business.businessToken}
                 </span>
+                <Link
+                  href="/business/settings"
+                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5"
+                >
+                  Edit Profile
+                </Link>
               </div>
             </div>
 
-            {/* Interactive Dashboard Tabs */}
-            <BusinessDashboardTabs
-              business={{
-                id: business.id,
-                name: business.name,
-                businessToken: business.businessToken,
-                loyaltyProgram: business.loyaltyProgram,
-              }}
-              joinUrl={joinUrl}
-              qrSvg={qrSvg}
-              qrDataUrl={qrDataUrl}
-              memberCount={memberCount}
-            />
+            {/* Loyalty Program Section */}
+            {!business.loyaltyProgram ? (
+              <div className="p-8 rounded-2xl bg-white border border-slate-200 border-dashed text-center space-y-4">
+                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">No Active Loyalty Program</h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    Start rewarding your customers! Create a Visits or Scratch Card program to generate your permanent QR code.
+                  </p>
+                </div>
+                <Link
+                  href="/business/loyalty/create"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-xs transition-colors"
+                >
+                  Start a Loyalty Program
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            ) : (
+              <BusinessDashboardTabs
+                business={{
+                  id: business.id,
+                  name: business.name,
+                  businessToken: business.businessToken,
+                  loyaltyProgram: business.loyaltyProgram,
+                }}
+                joinUrl={joinUrl}
+                qrSvg={qrSvg}
+                qrDataUrl={qrDataUrl}
+                memberCount={memberCount}
+              />
+            )}
           </div>
         )}
       </main>

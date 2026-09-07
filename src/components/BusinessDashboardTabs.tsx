@@ -63,7 +63,7 @@ export default function BusinessDashboardTabs({
 }: BusinessDashboardTabsProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "overview" | "requests" | "rewards" | "members" | "qr" | "loyalty" | "settings"
+    "overview" | "requests" | "rewards" | "members" | "qr" | "loyalty"
   >("overview");
 
   // Business Name Form State
@@ -236,18 +236,7 @@ export default function BusinessDashboardTabs({
           Loyalty Program
         </button>
 
-        <button
-          type="button"
-          onClick={() => setActiveTab("settings")}
-          className={`py-2.5 px-4 rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-            activeTab === "settings"
-              ? "bg-white border border-slate-200 border-b-transparent text-indigo-600 font-bold shadow-xs"
-              : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          <Settings className="w-3.5 h-3.5" />
-          Business Settings
-        </button>
+
       </div>
 
       {/* TAB 1: OVERVIEW */}
@@ -559,81 +548,7 @@ export default function BusinessDashboardTabs({
         </div>
       )}
 
-      {/* TAB 4: BUSINESS SETTINGS */}
-      {activeTab === "settings" && (
-        <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Business Profile Settings</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Update your shop or salon name. Your permanent QR code and join URL will remain 100% stable and unchanged.
-            </p>
-          </div>
 
-          {businessSuccess && (
-            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-              <span>{businessSuccess}</span>
-            </div>
-          )}
-
-          {businessError && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-              <span>{businessError}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleUpdateBusiness} className="space-y-4">
-            <div>
-              <label htmlFor="edit-business-name" className="block text-xs font-semibold text-slate-800 mb-1">
-                Business Name
-              </label>
-              <input
-                id="edit-business-name"
-                type="text"
-                required
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              />
-            </div>
-
-            {/* Read-Only Permanent Identifiers */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-              <span className="font-semibold text-slate-800 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                Permanent QR Join Token (Immutable)
-              </span>
-              <p className="text-slate-500 font-mono text-[11px] select-all break-all">
-                {business.businessToken}
-              </p>
-              <p className="text-[11px] text-slate-400">
-                This token is permanent and cannot be altered. Changing your business name does not break your printed counter QR stand.
-              </p>
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="submit"
-                disabled={savingBusiness}
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {savingBusiness ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-3.5 h-3.5" />
-                    Update Business Name
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }

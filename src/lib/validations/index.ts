@@ -58,15 +58,19 @@ export const BusinessSetupSchema = z.object({
     .min(2, "Business name must be at least 2 characters")
     .max(100, "Business name must be less than 100 characters")
     .trim(),
-  programName: z.string().min(2, "Program name must be at least 2 characters").max(100).trim(),
-  requiredVisits: z.number().int().min(1, "Required visits must be at least 1").max(100, "Required visits must be at most 100"),
-  rewardTitle: z.string().min(2, "Reward title must be at least 2 characters").max(100).trim(),
-  rewardDescription: z.string().max(500).trim().default(""),
-  rewardValidityDays: z.number().int().min(1, "Validity must be at least 1 day").max(365, "Validity must be at most 365 days").default(30),
-  verificationMethod: VerificationMethodSchema.default("VISIT_CONFIRMATION"),
-  rewardType: RewardTypeSchema.default("STANDARD"),
+  address: z.string().max(255).optional().or(z.literal("")),
+  businessType: z.string().max(100).optional().or(z.literal("")),
   googleReviewUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   instagramHandle: z.string().optional().or(z.literal("")),
+  youtubeHandle: z.string().optional().or(z.literal("")),
+});
+
+export const CustomerUpdateSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name must be less than 100 characters")
+    .trim(),
 });
 
 export const BusinessUpdateSchema = z.object({
@@ -75,6 +79,11 @@ export const BusinessUpdateSchema = z.object({
     .min(2, "Business name must be at least 2 characters")
     .max(100, "Business name must be less than 100 characters")
     .trim(),
+  address: z.string().max(255).optional().or(z.literal("")),
+  businessType: z.string().max(100).optional().or(z.literal("")),
+  googleReviewUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  instagramHandle: z.string().optional().or(z.literal("")),
+  youtubeHandle: z.string().optional().or(z.literal("")),
 });
 
 export const LoyaltyProgramSchema = z.object({
@@ -84,6 +93,7 @@ export const LoyaltyProgramSchema = z.object({
   rewardDescription: z.string().max(500, "Reward description must be at most 500 characters").trim().default(""),
   rewardValidityDays: z.number().int().min(1, "Validity must be at least 1 day").max(365, "Validity must be at most 365 days").default(30),
   verificationMethod: VerificationMethodSchema.default("VISIT_CONFIRMATION"),
+  rewardType: RewardTypeSchema.default("STANDARD"),
   isActive: z.boolean().default(true),
 });
 
