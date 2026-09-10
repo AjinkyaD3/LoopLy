@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+
 import { getBusinessJoinUrl, generateQRCodeSvg, generateQRCodeDataUrl } from "@/lib/qr";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 import { ArrowLeft, QrCode, ShieldCheck, Sparkles } from "lucide-react";
@@ -12,8 +12,8 @@ export const dynamic = "force-dynamic";
 export default async function BusinessQRPage() {
   const user = await getCurrentUser();
 
-  // Guard: Must be authenticated and have role BUSINESS_OWNER
-  if (!user || user.role !== UserRole.BUSINESS_OWNER) {
+  // Guard: Must be authenticated
+  if (!user) {
     redirect("/login");
   }
 

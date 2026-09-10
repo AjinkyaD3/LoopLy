@@ -1,14 +1,16 @@
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+
 import BusinessSettingsClient from "./BusinessSettingsClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function BusinessSettingsPage() {
   const user = await getCurrentUser();
-  if (!user || user.role !== UserRole.BUSINESS_OWNER) redirect("/login");
+  if (!user) {
+    redirect("/login");
+  }
 
   const business = await prisma.business.findUnique({
     where: { ownerId: user.id },

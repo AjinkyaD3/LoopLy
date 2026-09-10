@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, VerificationMethod, RequestStatus, RewardStatus } from "@prisma/client";
+import { PrismaClient, VerificationMethod, RequestStatus, RewardStatus } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -9,7 +9,7 @@ async function main() {
   // 1. Clean up existing records in reverse dependency order
   await prisma.reward.deleteMany();
   await prisma.visit.deleteMany();
-  await prisma.verificationRequest.deleteMany();
+  await prisma.visitRequest.deleteMany();
   await prisma.membership.deleteMany();
   await prisma.loyaltyProgram.deleteMany();
   await prisma.business.deleteMany();
@@ -25,7 +25,7 @@ async function main() {
       email: "alex.customer@example.test",
       name: "Alex Customer",
       passwordHash: mockPasswordHash,
-      role: UserRole.CUSTOMER,
+      
     },
   });
   console.log(`✓ Created Global Customer: ${customer.email} (${customer.id})`);
@@ -36,7 +36,7 @@ async function main() {
       email: "bella.owner@example.test",
       name: "Bella Martin",
       passwordHash: mockPasswordHash,
-      role: UserRole.BUSINESS_OWNER,
+      
     },
   });
 
@@ -69,7 +69,7 @@ async function main() {
       email: "dan.owner@example.test",
       name: "Dan Miller",
       passwordHash: mockPasswordHash,
-      role: UserRole.BUSINESS_OWNER,
+      
     },
   });
 
@@ -139,7 +139,7 @@ async function main() {
   }
 
   // Pending Bill verification request at Business A
-  const pendingRequestA = await prisma.verificationRequest.create({
+  const pendingRequestA = await prisma.visitRequest.create({
     data: {
       membershipId: membershipA.id,
       businessId: businessA.id,
@@ -180,7 +180,7 @@ async function main() {
   });
 
   // Pending Visit Confirmation request at Business B
-  const pendingRequestB = await prisma.verificationRequest.create({
+  const pendingRequestB = await prisma.visitRequest.create({
     data: {
       membershipId: membershipB.id,
       businessId: businessB.id,

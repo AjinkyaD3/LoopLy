@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+
 import { BusinessSetupSchema } from "@/lib/validations";
 import { generateBusinessToken } from "@/lib/token";
 
@@ -14,12 +14,7 @@ export async function POST(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (user.role !== UserRole.BUSINESS_OWNER) {
-      return NextResponse.json(
-        { error: "Forbidden: Only business owners can configure a business." },
-        { status: 403 }
-      );
-    }
+
 
     // 2. Check for duplicate setup (owner can have only one business in V1)
     const existingBusiness = await prisma.business.findUnique({

@@ -30,13 +30,13 @@ export async function GET(request: Request) {
     const validStatuses = ["PENDING", "APPROVED", "REJECTED"];
     const status = validStatuses.includes(statusParam ?? "") ? statusParam! : "PENDING";
 
-    const requests = await prisma.verificationRequest.findMany({
+    const requests = await prisma.visitRequest.findMany({
       where: {
         businessId: business.id,
         status: status as "PENDING" | "APPROVED" | "REJECTED",
       },
       include: {
-        customer: { select: { id: true, name: true, email: true } },
+        customer: { select: { id: true, name: true, mobileNumber: true } },
         membership: { select: { id: true, currentVisits: true, totalVisits: true } },
         visit: { select: { id: true, visitedAt: true } },
       },

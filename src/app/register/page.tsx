@@ -1,20 +1,13 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { UserRole } from "@prisma/client";
-import { Sparkles, ArrowRight, ShieldCheck, Store, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Sparkles, ArrowRight, ShieldCheck, Store } from "lucide-react";
 
-function RegisterForm() {
+export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const initialRole =
-    searchParams.get("role") === "BUSINESS_OWNER"
-      ? UserRole.BUSINESS_OWNER
-      : UserRole.CUSTOMER;
 
-  const [role, setRole] = useState<UserRole>(initialRole);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +25,7 @@ function RegisterForm() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role, acceptTerms, acceptPrivacy }),
+        body: JSON.stringify({ name, email, password, acceptTerms, acceptPrivacy }),
       });
 
       const data = await res.json();
@@ -43,11 +36,7 @@ function RegisterForm() {
         return;
       }
 
-      if (data.user.role === UserRole.BUSINESS_OWNER) {
-        router.push("/business");
-      } else {
-        router.push("/customer");
-      }
+      router.push("/business");
       router.refresh();
     } catch {
       setError("Unable to connect to the server. Please check your network.");
@@ -67,39 +56,9 @@ function RegisterForm() {
             Create an Account
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            {role === UserRole.CUSTOMER
-              ? "Join to earn rewards across all your favorite local shops."
-              : "Launch your business loyalty program with a single permanent QR."}
+            Launch your business loyalty program with a single permanent QR.
           </p>
         </header>
-
-        {/* Role Selection Tabs */}
-        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
-          <button
-            type="button"
-            onClick={() => setRole(UserRole.CUSTOMER)}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-medium transition-all ${
-              role === UserRole.CUSTOMER
-                ? "bg-white text-indigo-700 shadow-sm font-semibold"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <User className="w-3.5 h-3.5" />
-            Customer
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole(UserRole.BUSINESS_OWNER)}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-medium transition-all ${
-              role === UserRole.BUSINESS_OWNER
-                ? "bg-white text-indigo-700 shadow-sm font-semibold"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            <Store className="w-3.5 h-3.5" />
-            Business Owner
-          </button>
-        </div>
 
         {error && (
           <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
@@ -206,7 +165,7 @@ function RegisterForm() {
               "Creating account..."
             ) : (
               <>
-                Register as {role === UserRole.CUSTOMER ? "Customer" : "Owner"}
+                Register Business
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -231,13 +190,5 @@ function RegisterForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function RegisterPage() {
-  return (
-    <Suspense fallback={<div className="p-6 text-center text-xs text-slate-400">Loading...</div>}>
-      <RegisterForm />
-    </Suspense>
   );
 }

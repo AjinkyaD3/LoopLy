@@ -23,6 +23,7 @@ interface MemberItem {
   totalVisits: number;
   requiredVisits: number;
   activeRewardsCount: number;
+  activeClaimCodes: string[];
   redeemedRewardsCount: number;
   lastVisitAt: string | null;
 }
@@ -116,6 +117,11 @@ export default function BusinessMembersPanel() {
                   {isRewardReady && (
                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold flex items-center gap-1">
                       <Gift className="w-2.5 h-2.5" /> Reward Ready
+                    </span>
+                  )}
+                  {m.activeClaimCodes?.length > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold flex items-center gap-1">
+                      Code: {m.activeClaimCodes.join(", ")}
                     </span>
                   )}
                 </div>

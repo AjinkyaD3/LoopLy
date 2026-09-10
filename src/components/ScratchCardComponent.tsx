@@ -4,16 +4,14 @@ import { useRef, useState, useEffect } from "react";
 import { Sparkles, Gift } from "lucide-react";
 
 interface Props {
-  rewardId: string;
-  onScratchComplete: (revealedPrize: string) => void;
+  revealedPrize: string;
+  onScratchComplete?: () => void;
 }
 
-export default function ScratchCardComponent({ rewardId, onScratchComplete }: Props) {
+export default function ScratchCardComponent({ revealedPrize, onScratchComplete }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isScratching, setIsScratching] = useState(false);
   const [isRevealed, setIsRevealed] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Initialize canvas
   useEffect(() => {
@@ -44,40 +42,25 @@ export default function ScratchCardComponent({ rewardId, onScratchComplete }: Pr
     ctx.fillText("SCRATCH TO REVEAL", rect.width / 2, rect.height / 2);
   }, []);
 
-  const handleReveal = async () => {
-    if (isLoading || isRevealed) return;
+  const handleReveal = () => {
+    if (isRevealed) return;
+    setIsRevealed(true);
     
-    setIsLoading(true);
-    try {
-      const res = await fetch(`/api/customer/rewards/${rewardId}/scratch`, {
-        method: "PATCH",
-      });
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || "Failed to reveal");
-      
-      setIsRevealed(true);
-      
-      // Clear canvas fully
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (canvas && ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      
-      onScratchComplete(data.revealedPrize);
-    } catch (err: unknown) {
-      setError((err as Error).message);
-    } finally {
-      setIsLoading(false);
+    // Clear canvas fully
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+    
+    if (onScratchComplete) onScratchComplete();
   };
 
   // Canvas scratching logic
   const scratch = (x: number, y: number) => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || isRevealed || isLoading) return;
+    if (!canvas || !ctx || isRevealed) return;
 
     const rect = canvas.getBoundingClientRect();
     
@@ -122,18 +105,17 @@ export default function ScratchCardComponent({ rewardId, onScratchComplete }: Pr
 
   return (
     <div className="relative w-full h-40 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center select-none touch-none">
-      {/* Underlying Prize Layer (Only visible when scratched/loading) */}
+      {/* Underlying Prize Layer */}
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-        {isLoading ? (
-          <div className="animate-pulse text-white font-bold">Revealing...</div>
-        ) : isRevealed ? (
+        {isRevealed ? (
           <div className="animate-in zoom-in duration-300">
             <Gift className="w-10 h-10 text-white mx-auto mb-2 opacity-80" />
-            <p className="text-white font-black text-lg leading-tight">Winner!</p>
+            <p className="text-white font-black text-lg leading-tight">{revealedPrize}</p>
           </div>
         ) : (
           <div className="text-indigo-200">
             <Sparkles className="w-8 h-8 mx-auto opacity-50" />
+            <span className="sr-only">{revealedPrize}</span>
           </div>
         )}
       </div>
@@ -149,12 +131,6 @@ export default function ScratchCardComponent({ rewardId, onScratchComplete }: Pr
         }`}
         style={{ touchAction: "none" }}
       />
-      
-      {error && (
-        <div className="absolute bottom-2 left-2 right-2 bg-rose-500 text-white text-xs p-2 rounded-lg text-center font-semibold">
-          {error}
-        </div>
-      )}
     </div>
   );
 }

@@ -79,14 +79,14 @@ export async function GET() {
       }),
 
       // 8. Pending verification requests awaiting owner action
-      prisma.verificationRequest.count({
+      prisma.visitRequest.count({
         where: { businessId: business.id, status: "PENDING" },
       }),
 
       // 9. Recent verified visits
       prisma.visit.findMany({
         where: { businessId: business.id },
-        include: { customer: { select: { name: true, email: true } } },
+        include: { customer: { select: { name: true, mobileNumber: true } } },
         orderBy: { visitedAt: "desc" },
         take: 5,
       }),
@@ -94,7 +94,7 @@ export async function GET() {
       // 10. Recent redemptions
       prisma.reward.findMany({
         where: { businessId: business.id, status: "REDEEMED" },
-        include: { customer: { select: { name: true, email: true } } },
+        include: { customer: { select: { name: true, mobileNumber: true } } },
         orderBy: { redeemedAt: "desc" },
         take: 5,
       }),
@@ -102,7 +102,7 @@ export async function GET() {
       // 11. Recent new members
       prisma.membership.findMany({
         where: { businessId: business.id },
-        include: { customer: { select: { name: true, email: true } } },
+        include: { customer: { select: { name: true, mobileNumber: true } } },
         orderBy: { joinedAt: "desc" },
         take: 5,
       }),
@@ -117,7 +117,7 @@ export async function GET() {
       type: "JOIN" | "VISIT" | "REDEEM";
       title: string;
       customerName: string;
-      customerEmail: string;
+      customerMobile: string;
       timestamp: Date;
     }
 
@@ -128,8 +128,8 @@ export async function GET() {
         id: `join-${m.id}`,
         type: "JOIN",
         title: "Joined loyalty club",
-        customerName: m.customer.name,
-        customerEmail: m.customer.email,
+        customerName: m.customer.name || "Unknown",
+        customerMobile: m.customer.mobileNumber || "",
         timestamp: m.joinedAt,
       });
     });
@@ -139,8 +139,8 @@ export async function GET() {
         id: `visit-${v.id}`,
         type: "VISIT",
         title: "Verified visit recorded",
-        customerName: v.customer.name,
-        customerEmail: v.customer.email,
+        customerName: v.customer.name || "Unknown",
+        customerMobile: v.customer.mobileNumber || "",
         timestamp: v.visitedAt,
       });
     });
@@ -151,8 +151,8 @@ export async function GET() {
           id: `redeem-${r.id}`,
           type: "REDEEM",
           title: `Redeemed reward: ${r.title}`,
-          customerName: r.customer.name,
-          customerEmail: r.customer.email,
+          customerName: r.customer.name || "Unknown",
+          customerMobile: r.customer.mobileNumber || "",
           timestamp: r.redeemedAt,
         });
       }

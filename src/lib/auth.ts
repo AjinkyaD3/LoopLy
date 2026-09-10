@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import * as bcrypt from "bcryptjs";
-import { UserRole } from "@prisma/client";
 import prisma from "@/lib/prisma";
 
 // =============================================================================
@@ -11,16 +10,12 @@ import prisma from "@/lib/prisma";
 export const SESSION_COOKIE_NAME = "looply_session";
 
 // Business Owner session: 7 days
-export const BUSINESS_OWNER_SESSION_MS = 7 * 24 * 60 * 60 * 1000;
-
-// Customer session: 24 hours
-export const CUSTOMER_SESSION_MS = 24 * 60 * 60 * 1000;
+export const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface SafeUser {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,23 +38,18 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 // =============================================================================
 
 /**
- * Calculates session expiration date based strictly on role.
- * Business Owner: 7 days. Customer: 24 hours.
+ * Calculates session expiration date.
  */
-export function getSessionExpiration(role: UserRole): Date {
-  const durationMs =
-    role === UserRole.BUSINESS_OWNER
-      ? BUSINESS_OWNER_SESSION_MS
-      : CUSTOMER_SESSION_MS;
-  return new Date(Date.now() + durationMs);
+export function getSessionExpiration(): Date {
+  return new Date(Date.now() + SESSION_MS);
 }
 
 /**
  * Creates a server-side session in the database with cryptographically random token.
  */
-export async function createSession(userId: string, role: UserRole) {
+export async function createSession(userId: string) {
   const sessionToken = randomBytes(32).toString("hex");
-  const expiresAt = getSessionExpiration(role);
+  const expiresAt = getSessionExpiration();
 
   const session = await prisma.session.create({
     data: {
@@ -89,7 +79,6 @@ export async function validateSession(sessionToken: string) {
           id: true,
           email: true,
           name: true,
-          role: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -161,31 +150,13 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
 }
 
 /**
- * Enforces that the request is from an authenticated CUSTOMER.
- * Throws an Error with code "UNAUTHORIZED" or "FORBIDDEN".
- */
-export async function requireCustomer(): Promise<SafeUser> {
-  const user = await getCurrentUser();
-  if (!user) {
-    throw new Error("UNAUTHORIZED");
-  }
-  if (user.role !== UserRole.CUSTOMER) {
-    throw new Error("FORBIDDEN_NOT_CUSTOMER");
-  }
-  return user;
-}
-
-/**
  * Enforces that the request is from an authenticated BUSINESS_OWNER.
- * Throws an Error with code "UNAUTHORIZED" or "FORBIDDEN".
+ * Throws an Error with code "UNAUTHORIZED".
  */
 export async function requireBusinessOwner(): Promise<SafeUser> {
   const user = await getCurrentUser();
   if (!user) {
     throw new Error("UNAUTHORIZED");
-  }
-  if (user.role !== UserRole.BUSINESS_OWNER) {
-    throw new Error("FORBIDDEN_NOT_BUSINESS_OWNER");
   }
   return user;
 }

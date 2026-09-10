@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
 
-    const { email, password, role: selectedRole } = parsed.data;
+    const { email, password } = parsed.data;
 
     // 3. Normalize email
     const normalizedEmail = email.trim().toLowerCase();
@@ -49,36 +49,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Server-side Role Consistency Check (Strictly Enforced)
-    if (selectedRole !== user.role) {
-      if (user.role === "BUSINESS_OWNER") {
-        return NextResponse.json(
-          {
-            error:
-              "These credentials belong to a Business Owner account. Please select Business Owner to continue.",
-          },
-          { status: 403 }
-        );
-      } else {
-        return NextResponse.json(
-          {
-            error:
-              "These credentials belong to a Customer account. Please select Customer to continue.",
-          },
-          { status: 403 }
-        );
-      }
-    }
-
-    // 7. Create server-side session with role-dependent expiration (7 days owner / 24h customer)
-    const session = await createSession(user.id, user.role);
+    // 6. Create server-side session
+    const session = await createSession(user.id);
 
     // 7. Sanitize user data
     const safeUser = {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

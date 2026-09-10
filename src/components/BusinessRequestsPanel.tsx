@@ -15,8 +15,8 @@ import {
 
 interface VRCustomer {
   id: string;
-  name: string;
-  email: string;
+  name: string | null;
+  mobileNumber: string;
 }
 
 interface VRMembership {
@@ -25,13 +25,14 @@ interface VRMembership {
   totalVisits: number;
 }
 
-interface VerificationRequest {
+interface VisitRequest {
   id: string;
   method: "VISIT_CONFIRMATION" | "BILL";
   status: "PENDING" | "APPROVED" | "REJECTED";
   billImagePath: string | null;
   signedBillUrl?: string | null;
   rejectionReason: string | null;
+  enteredName: string | null;
   createdAt: string;
   reviewedAt: string | null;
   customer: VRCustomer;
@@ -50,7 +51,7 @@ export default function BusinessRequestsPanel({
 }: BusinessRequestsPanelProps) {
   const router = useRouter();
   const [status, setStatus] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
-  const [requests, setRequests] = useState<VerificationRequest[]>([]);
+  const [requests, setRequests] = useState<VisitRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; type: "success" | "error"; msg: string } | null>(null);
@@ -94,7 +95,7 @@ export default function BusinessRequestsPanel({
         const msg =
           decision === "APPROVED"
             ? data.rewardEarned
-              ? "✅ Approved! Reward earned by customer."
+              ? `✅ Approved! Reward earned. Claim Code: ${data.claimCode}`
               : `✅ Approved! ${data.membershipCurrentVisits}/${requiredVisits} visits.`
             : "❌ Request rejected.";
         setFeedback({ id: requestId, type: "success", msg });
@@ -151,8 +152,8 @@ export default function BusinessRequestsPanel({
               {/* Request header */}
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-0.5">
-                  <p className="text-sm font-bold text-slate-900">{r.customer.name}</p>
-                  <p className="text-[11px] text-slate-500">{r.customer.email}</p>
+                  <p className="text-sm font-bold text-slate-900">{r.enteredName || r.customer.name || "Unknown Customer"}</p>
+                  <p className="text-[11px] text-slate-500">{r.customer.mobileNumber}</p>
                   <p className="text-[11px] text-slate-400">
                     {new Date(r.createdAt).toLocaleDateString("en-IN", {
                       day: "numeric", month: "short", year: "numeric",

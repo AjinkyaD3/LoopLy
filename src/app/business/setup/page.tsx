@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+
 import BusinessSetupForm from "@/components/BusinessSetupForm";
 import { ArrowLeft, CheckCircle2, Store, Sparkles } from "lucide-react";
 
@@ -12,7 +12,7 @@ export default async function BusinessSetupPage() {
   const user = await getCurrentUser();
 
   // Guard: Must be authenticated and have role BUSINESS_OWNER
-  if (!user || user.role !== UserRole.BUSINESS_OWNER) {
+  if (!user) {
     redirect("/login");
   }
 

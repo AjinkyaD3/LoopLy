@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
               customer: {
                 OR: [
                   { name: { contains: search, mode: "insensitive" } },
-                  { email: { contains: search, mode: "insensitive" } },
+                  { mobileNumber: { contains: search } },
                 ],
               },
             }
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            email: true,
+            mobileNumber: true,
             createdAt: true,
           },
         },
@@ -59,6 +59,7 @@ export async function GET(request: NextRequest) {
             status: true,
             expiresAt: true,
             redeemedAt: true,
+            claimCode: true,
           },
         },
         visits: {
@@ -74,9 +75,10 @@ export async function GET(request: NextRequest) {
     const requiredVisits = business.loyaltyProgram.requiredVisits;
 
     const formattedMembers = memberships.map((m) => {
-      const activeRewardsCount = m.rewards.filter(
+      const activeRewards = m.rewards.filter(
         (r) => r.status === "AVAILABLE" && r.expiresAt > now
-      ).length;
+      );
+      const activeClaimCodes = activeRewards.map(r => r.claimCode).filter(Boolean);
       const redeemedRewardsCount = m.rewards.filter((r) => r.status === "REDEEMED").length;
       const lastVisitAt = m.visits[0]?.visitedAt ?? null;
 
@@ -84,12 +86,13 @@ export async function GET(request: NextRequest) {
         id: m.id,
         customerId: m.customer.id,
         name: m.customer.name,
-        email: m.customer.email,
+        mobileNumber: m.customer.mobileNumber,
         joinedAt: m.joinedAt,
         currentVisits: m.currentVisits,
         totalVisits: m.totalVisits,
         requiredVisits,
-        activeRewardsCount,
+        activeRewardsCount: activeRewards.length,
+        activeClaimCodes,
         redeemedRewardsCount,
         lastVisitAt,
       };

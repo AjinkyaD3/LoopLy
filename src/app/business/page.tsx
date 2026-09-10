@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+
 import LogoutButton from "@/components/LogoutButton";
 import BusinessDashboardTabs from "@/components/BusinessDashboardTabs";
 import { getBusinessJoinUrl, generateQRCodeSvg, generateQRCodeDataUrl } from "@/lib/qr";
@@ -19,15 +19,15 @@ export const dynamic = "force-dynamic";
 export default async function BusinessDashboardPage() {
   const user = await getCurrentUser();
 
-  // Guard: Must be authenticated and have role BUSINESS_OWNER
-  if (!user || user.role !== UserRole.BUSINESS_OWNER) {
+  // Guard: Must be authenticated
+  if (!user) {
     redirect("/login");
   }
 
   // Intelligently check if the owner has already configured a business
   const business = await prisma.business.findUnique({
     where: { ownerId: user.id },
-    include: { loyaltyProgram: true },
+    include: { loyaltyProgram: { include: { scratchCardPrizes: true } } },
   });
 
   // If business is configured, fetch live membership count & QR assets

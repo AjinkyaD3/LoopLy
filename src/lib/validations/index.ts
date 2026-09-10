@@ -4,8 +4,6 @@ import { z } from "zod";
 // DOMAIN ENUMS (matching Prisma schema)
 // =============================================================================
 
-export const UserRoleSchema = z.enum(["CUSTOMER", "BUSINESS_OWNER"]);
-export type UserRole = z.infer<typeof UserRoleSchema>;
 
 export const VerificationMethodSchema = z.enum(["BILL", "VISIT_CONFIRMATION"]);
 export type VerificationMethod = z.infer<typeof VerificationMethodSchema>;
@@ -18,6 +16,15 @@ export type RewardStatus = z.infer<typeof RewardStatusSchema>;
 
 export const RewardTypeSchema = z.enum(["STANDARD", "SCRATCH_CARD"]);
 export type RewardType = z.infer<typeof RewardTypeSchema>;
+
+export const ProgramTypeSchema = z.enum(["VISITS", "SCRATCH_CARD"]);
+export type ProgramType = z.infer<typeof ProgramTypeSchema>;
+
+export const ScratchCardPrizeSchema = z.object({
+  title: z.string().min(2, "Prize title must be at least 2 characters").max(100).trim(),
+  description: z.string().max(500).trim().optional().or(z.literal("")),
+  weight: z.number().int().positive("Weight must be a positive number"),
+});
 
 // =============================================================================
 // VALIDATION SCHEMAS
@@ -34,7 +41,6 @@ export const UserRegistrationSchema = z.object({
     .min(2, "Name must be at least 2 characters")
     .max(100, "Name must be less than 100 characters")
     .trim(),
-  role: UserRoleSchema.default("CUSTOMER"),
   acceptTerms: z.literal(true, {
     errorMap: () => ({ message: "You must accept the Terms & Conditions." }),
   }),
@@ -46,7 +52,6 @@ export const UserRegistrationSchema = z.object({
 export const UserLoginSchema = z.object({
   email: z.string().email("Invalid email address").toLowerCase().trim(),
   password: z.string().min(1, "Password is required"),
-  role: UserRoleSchema.default("CUSTOMER"),
 });
 
 export const BusinessCreateSchema = z.object({
@@ -93,14 +98,22 @@ export const BusinessUpdateSchema = z.object({
 });
 
 export const LoyaltyProgramSchema = z.object({
+  type: ProgramTypeSchema.default("VISITS"),
   programName: z.string().min(2, "Program name must be at least 2 characters").max(100, "Program name must be at most 100 characters").trim(),
-  requiredVisits: z.number().int().min(1, "Required visits must be at least 1").max(100, "Required visits must be at most 100"),
+  requiredVisits: z.number().int().min(1, "Required visits must be at least 1").max(100, "Required visits must be at most 100").default(10),
   rewardTitle: z.string().min(2, "Reward title must be at least 2 characters").max(100, "Reward title must be at most 100 characters").trim(),
   rewardDescription: z.string().max(500, "Reward description must be at most 500 characters").trim().default(""),
   rewardValidityDays: z.number().int().min(1, "Validity must be at least 1 day").max(365, "Validity must be at most 365 days").default(30),
   verificationMethod: VerificationMethodSchema.default("VISIT_CONFIRMATION"),
   rewardType: RewardTypeSchema.default("STANDARD"),
   isActive: z.boolean().default(true),
+  prizes: z.array(ScratchCardPrizeSchema).optional(),
+}).superRefine((data, ctx) => {
+  if (data.type === "SCRATCH_CARD") {
+    if (!data.prizes || data.prizes.length < 3 || data.prizes.length > 10) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Between 3 and 10 prizes are required for a Scratch Card program", path: ["prizes"] });
+    }
+  }
 });
 
 export const VerificationRequestCreateSchema = z.object({

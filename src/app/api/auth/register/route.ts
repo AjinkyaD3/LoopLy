@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: firstError }, { status: 400 });
     }
 
-    const { name, email, password, role, acceptTerms, acceptPrivacy } = parsed.data;
+    const { name, email, password, acceptTerms, acceptPrivacy } = parsed.data;
 
     // 3. Normalize email: lowercase & trimmed
     const normalizedEmail = email.trim().toLowerCase();
@@ -45,20 +45,18 @@ export async function POST(request: NextRequest) {
     // 5. Hash password (never plaintext)
     const passwordHash = await hashPassword(password);
 
-    // 6. Create user
+    // 6. Create user (Only business owners now)
     const user = await prisma.user.create({
       data: {
         name,
         email: normalizedEmail,
         passwordHash,
-        role,
         legalAcceptances: {
           create: {
             termsVersion: LEGAL_VERSIONS.terms,
             termsAcceptedAt: new Date(),
             privacyVersion: LEGAL_VERSIONS.privacy,
             privacyAcceptedAt: new Date(),
-            accountRole: role,
           },
         },
       },
@@ -66,14 +64,13 @@ export async function POST(request: NextRequest) {
         id: true,
         email: true,
         name: true,
-        role: true,
         createdAt: true,
         updatedAt: true,
       },
     });
 
-    // 7. Create server-side session with role-dependent expiration
-    const session = await createSession(user.id, user.role);
+    // 7. Create server-side session
+    const session = await createSession(user.id);
 
     // 8. Set HTTP-only cookie
     const response = NextResponse.json({ success: true, user }, { status: 201 });

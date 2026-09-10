@@ -12,8 +12,8 @@ export default function RewardCard({ reward }: RewardProps) {
   const [revealedPrize, setRevealedPrize] = useState(reward.revealedPrize);
   const [isScratched, setIsScratched] = useState(reward.isScratched);
 
-  const handleScratchComplete = (prize: string) => {
-    setRevealedPrize(prize);
+  const handleScratchComplete = () => {
+    setRevealedPrize(reward.title);
     setIsScratched(true);
   };
 
@@ -28,7 +28,7 @@ export default function RewardCard({ reward }: RewardProps) {
           </div>
           <div className="flex-1 w-full">
             {showScratchCard ? (
-              <ScratchCardComponent rewardId={reward.id} onScratchComplete={handleScratchComplete} />
+              <ScratchCardComponent revealedPrize={reward.title} onScratchComplete={handleScratchComplete} />
             ) : (
               <>
                 <p className="text-sm font-bold text-emerald-900">

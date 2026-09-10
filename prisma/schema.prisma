@@ -18,11 +18,6 @@ datasource db {
 // ENUMS
 // -----------------------------------------------------------------------------
 
-enum UserRole {
-  CUSTOMER
-  BUSINESS_OWNER
-}
-
 enum VerificationMethod {
   BILL
   VISIT_CONFIRMATION
@@ -45,6 +40,11 @@ enum RewardType {
   SCRATCH_CARD
 }
 
+enum ProgramType {
+  VISITS
+  SCRATCH_CARD
+}
+
 // -----------------------------------------------------------------------------
 // USER & AUTH
 // -----------------------------------------------------------------------------
@@ -54,28 +54,18 @@ model User {
   email        String    @unique
   passwordHash String
   name         String
-  role         UserRole  @default(CUSTOMER)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  // Single business owned in V1 (null for CUSTOMER)
+  // Single business owned in V1
   ownedBusiness        Business?
-  // Memberships across multiple businesses (as CUSTOMER)
-  memberships          Membership[]
   // Active sessions
   sessions             Session[]
-  // Verification requests initiated (as CUSTOMER)
-  verificationRequests VerificationRequest[]
-  // Verified visits (as CUSTOMER)
-  visits               Visit[]
-  // Earned rewards (as CUSTOMER)
-  rewards              Reward[]
+
   // Rewards redeemed by this business owner (audit trail)
   redeemedRewards      Reward[]              @relation("RedeemedBy")
   // Legal acceptances (Terms, Privacy)
   legalAcceptances     LegalAcceptance[]
-
-  @@index([role])
 }
 
 model Session {
@@ -102,10 +92,32 @@ model LegalAcceptance {
   termsAcceptedAt   DateTime
   privacyVersion    String
   privacyAcceptedAt DateTime
-  accountRole       UserRole
   createdAt         DateTime @default(now())
 
   @@index([userId])
+}
+
+// -----------------------------------------------------------------------------
+// CUSTOMER (Mobile Number Identity)
+// -----------------------------------------------------------------------------
+
+model Customer {
+  id           String   @id @default(cuid())
+  mobileNumber String
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  memberships          Membership[]
+  visitRequests        VisitRequest[]
+  visits               Visit[]
+  rewards              Reward[]
+
+  @@unique([businessId, mobileNumber])
+  @@index([mobileNumber])
+  @@index([businessId])
 }
 
 // -----------------------------------------------------------------------------
@@ -131,7 +143,8 @@ model Business {
 
   loyaltyProgram       LoyaltyProgram?
   memberships          Membership[]
-  verificationRequests VerificationRequest[]
+  customers            Customer[]
+  visitRequests        VisitRequest[]
   visits               Visit[]
   rewards              Reward[]
 
@@ -144,6 +157,7 @@ model LoyaltyProgram {
   businessId         String             @unique
   business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
   programName        String
+  type               ProgramType        @default(VISITS)
   requiredVisits     Int                @default(10)
   rewardTitle        String
   rewardDescription  String
@@ -154,9 +168,29 @@ model LoyaltyProgram {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  rewards Reward[]
+  rewards           Reward[]
+  scratchCardPrizes ScratchCardPrize[]
 
   @@index([businessId])
+}
+
+// -----------------------------------------------------------------------------
+// SCRATCH CARD PRIZE (For SCRATCH_CARD programs)
+// -----------------------------------------------------------------------------
+
+model ScratchCardPrize {
+  id               String         @id @default(cuid())
+  loyaltyProgramId String
+  loyaltyProgram   LoyaltyProgram @relation(fields: [loyaltyProgramId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?
+  weight           Int
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  rewards          Reward[]
+
+  @@index([loyaltyProgramId])
 }
 
 // -----------------------------------------------------------------------------
@@ -166,7 +200,7 @@ model LoyaltyProgram {
 model Membership {
   id            String   @id @default(cuid())
   customerId    String
-  customer      User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   businessId    String
   business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   currentVisits Int      @default(0) // Progress towards current reward threshold
@@ -176,7 +210,7 @@ model Membership {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  verificationRequests VerificationRequest[]
+  visitRequests        VisitRequest[]
   visits               Visit[]
   rewards              Reward[]
 
@@ -190,14 +224,15 @@ model Membership {
 // VERIFICATION REQUEST (Evidence / Approval Submission)
 // -----------------------------------------------------------------------------
 
-model VerificationRequest {
+model VisitRequest {
   id              String             @id @default(cuid())
   membershipId    String
   membership      Membership         @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   businessId      String
   business        Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customerId      String
-  customer        User               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer        Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  enteredName     String?
   method          VerificationMethod
   billImagePath   String? // Supabase Storage object path (nullable for VISIT_CONFIRMATION)
   status          RequestStatus      @default(PENDING)
@@ -225,9 +260,9 @@ model Visit {
   businessId            String
   business              Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customerId            String
-  customer              User                 @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer              Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
   verificationRequestId String?              @unique
-  verificationRequest   VerificationRequest? @relation(fields: [verificationRequestId], references: [id], onDelete: SetNull)
+  verificationRequest   VisitRequest?        @relation(fields: [verificationRequestId], references: [id], onDelete: SetNull)
   visitedAt             DateTime             @default(now())
 
   @@index([membershipId])
@@ -247,15 +282,18 @@ model Reward {
   businessId       String
   business         Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customerId       String
-  customer         User           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer         Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   loyaltyProgramId String
   loyaltyProgram   LoyaltyProgram @relation(fields: [loyaltyProgramId], references: [id], onDelete: Restrict)
-  title            String
-  description      String
-  status           RewardStatus   @default(AVAILABLE)
-  type             RewardType     @default(STANDARD)
-  isScratched      Boolean        @default(false)
-  revealedPrize    String?
+  title              String
+  description        String
+  status             RewardStatus      @default(AVAILABLE)
+  type               RewardType        @default(STANDARD)
+  claimCode          String?           // Used for VISITS program one-time code claim
+  scratchCardPrizeId String?
+  scratchCardPrize   ScratchCardPrize? @relation(fields: [scratchCardPrizeId], references: [id], onDelete: SetNull)
+  isScratched        Boolean           @default(false)
+  revealedPrize      String?
   expiresAt        DateTime
   redeemedAt       DateTime?
   redeemedByUserId String?

@@ -14,7 +14,7 @@ import {
   HeartHandshake,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +52,7 @@ export default async function Home() {
           <div className="flex items-center gap-3">
             {user ? (
               <Link
-                href={user.role === UserRole.BUSINESS_OWNER ? "/business" : "/customer"}
+                href="/business"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
               >
                 Go to Dashboard

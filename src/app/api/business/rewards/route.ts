@@ -28,7 +28,7 @@ export async function GET() {
         expiresAt: { gt: now },
       },
       include: {
-        customer: { select: { name: true, email: true } },
+        customer: { select: { name: true, mobileNumber: true } },
       },
       orderBy: { createdAt: "desc" },
     });

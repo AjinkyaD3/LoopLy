@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireBusinessOwner } from "@/lib/auth";
 import { VerificationReviewSchema } from "@/lib/validations";
+import crypto from "crypto";
+
+function generateClaimCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "";
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -57,14 +67,14 @@ export async function PATCH(
 
     if (decision === "REJECTED") {
       // Simple update — no visit, no membership change
-      const vr = await prisma.verificationRequest.findUnique({ where: { id: requestId } });
+      const vr = await prisma.visitRequest.findUnique({ where: { id: requestId } });
       if (!vr) return NextResponse.json({ error: "Verification request not found." }, { status: 404 });
       if (vr.businessId !== business.id) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
       if (vr.status !== "PENDING") {
         return NextResponse.json({ error: "Only PENDING requests can be reviewed." }, { status: 409 });
       }
 
-      const updated = await prisma.verificationRequest.update({
+      const updated = await prisma.visitRequest.update({
         where: { id: requestId },
         data: { status: "REJECTED", reviewedAt: new Date(), rejectionReason: rejectionReason ?? null },
       });
@@ -75,7 +85,7 @@ export async function PATCH(
     // APPROVE — atomic transaction
     const result = await prisma.$transaction(async (tx) => {
       // Re-fetch inside transaction for consistency
-      const vr = await tx.verificationRequest.findUnique({
+      const vr = await tx.visitRequest.findUnique({
         where: { id: requestId },
         include: { membership: true },
       });
@@ -87,7 +97,7 @@ export async function PATCH(
       const now = new Date();
 
       // 1. Approve the request
-      await tx.verificationRequest.update({
+      await tx.visitRequest.update({
         where: { id: requestId },
         data: { status: "APPROVED", reviewedAt: now },
       });
@@ -111,26 +121,20 @@ export async function PATCH(
         },
       });
 
-      const { requiredVisits, rewardTitle, rewardDescription, rewardValidityDays, rewardType, id: loyaltyProgramId } =
+      const { requiredVisits, rewardTitle, rewardDescription, rewardValidityDays, rewardType, type: programType, id: loyaltyProgramId } =
         business.loyaltyProgram!;
 
       let reward = null;
 
       // 4. Check threshold and create reward if earned
       if (updatedMembership.currentVisits >= requiredVisits) {
-        let revealedPrize = null;
-        if (rewardType === "SCRATCH_CARD") {
-          const rand = Math.random() * 100;
-          if (rand < 5) {
-            revealedPrize = `${rewardTitle} & 50% Off Next Item (Grand Prize!)`;
-          } else if (rand < 20) {
-            revealedPrize = `${rewardTitle} & Free Extra Item (Medium Prize!)`;
-          } else if (rand < 80) {
-            revealedPrize = `${rewardTitle} & 10% Off Next Item (Small Prize!)`;
-          } else {
-            revealedPrize = rewardTitle; // 20% no bonus
-          }
+        
+        // Only VISITS programs have this VisitRequest approval flow
+        if (programType !== "VISITS") {
+           throw new Error("INVALID_PROGRAM_TYPE");
         }
+
+        const claimCode = generateClaimCode();
 
         reward = await tx.reward.create({
           data: {
@@ -142,7 +146,7 @@ export async function PATCH(
             description: rewardDescription,
             status: "AVAILABLE",
             type: rewardType,
-            revealedPrize,
+            claimCode,
             expiresAt: new Date(now.getTime() + rewardValidityDays * 24 * 60 * 60 * 1000),
           },
         });
@@ -159,6 +163,7 @@ export async function PATCH(
         membershipTotalVisits: updatedMembership.totalVisits,
         rewardEarned: reward !== null,
         requiredVisits,
+        claimCode: reward?.claimCode,
       };
     });
 
@@ -168,6 +173,7 @@ export async function PATCH(
       membershipCurrentVisits: result.membershipCurrentVisits,
       membershipTotalVisits: result.membershipTotalVisits,
       rewardEarned: result.rewardEarned,
+      claimCode: result.claimCode,
       message: result.rewardEarned
         ? "Visit approved and reward earned!"
         : `Visit approved. ${result.membershipCurrentVisits}/${result.requiredVisits} visits toward next reward.`,

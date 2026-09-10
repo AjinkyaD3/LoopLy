@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { UserRole } from "@prisma/client";
+
 import { BusinessUpdateSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
@@ -17,12 +17,7 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (user.role !== UserRole.BUSINESS_OWNER) {
-      return NextResponse.json(
-        { error: "Forbidden: Only business owners can access this resource." },
-        { status: 403 }
-      );
-    }
+
 
     const business = await prisma.business.findUnique({
       where: { ownerId: user.id },
@@ -72,12 +67,7 @@ export async function PUT(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (user.role !== UserRole.BUSINESS_OWNER) {
-      return NextResponse.json(
-        { error: "Forbidden: Only business owners can update business details." },
-        { status: 403 }
-      );
-    }
+
 
     const existingBusiness = await prisma.business.findUnique({
       where: { ownerId: user.id },
