@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         throw new Error("INVALID_PROGRAM");
       }
 
-      if (program.scratchCardPrizes.length !== 5) {
+      if (program.scratchCardPrizes.length < 3 || program.scratchCardPrizes.length > 10) {
         throw new Error("INVALID_PRIZES");
       }
 
