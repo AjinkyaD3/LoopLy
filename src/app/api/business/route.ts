@@ -30,7 +30,7 @@ export async function GET() {
       return NextResponse.json({ business: null }, { status: 200 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
     const joinUrl = `${appUrl}/join/${business.businessToken}`;
 
     return NextResponse.json(
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
       include: { loyaltyProgram: true },
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
     const joinUrl = `${appUrl}/join/${updated.businessToken}`;
 
     return NextResponse.json(

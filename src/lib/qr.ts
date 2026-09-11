@@ -5,7 +5,7 @@ import QRCode from "qrcode";
  * Validates environment configuration safely.
  */
 export function getBusinessJoinUrl(businessToken: string): string {
-  const rawUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const rawUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
   if (!rawUrl || typeof rawUrl !== "string" || rawUrl.trim() === "") {
     throw new Error("NEXT_PUBLIC_APP_URL is missing or invalid in environment configuration.");
   }
