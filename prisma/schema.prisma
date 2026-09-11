@@ -40,11 +40,6 @@ enum RewardType {
   SCRATCH_CARD
 }
 
-enum ProgramType {
-  VISITS
-  SCRATCH_CARD
-}
-
 // -----------------------------------------------------------------------------
 // USER & AUTH
 // -----------------------------------------------------------------------------
@@ -157,13 +152,13 @@ model LoyaltyProgram {
   businessId         String             @unique
   business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
   programName        String
-  type               ProgramType        @default(VISITS)
+  visitsEnabled      Boolean            @default(true)
+  scratchCardEnabled Boolean            @default(false)
   requiredVisits     Int                @default(10)
   rewardTitle        String
   rewardDescription  String
   rewardValidityDays Int                @default(30)
   verificationMethod VerificationMethod @default(VISIT_CONFIRMATION)
-  rewardType         RewardType         @default(STANDARD)
   isActive           Boolean            @default(true)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
