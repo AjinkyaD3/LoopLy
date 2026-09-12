@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -14,13 +13,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Missing mobileNumber or businessId" }, { status: 400 });
     }
 
-    const business = await prisma.business.findUnique({
-      where: { id: businessId },
-      include: { loyaltyProgram: true },
+    const now = new Date();
+    // Get the currently active program for this business
+    const activeProgram = await prisma.loyaltyProgram.findFirst({
+      where: {
+        businessId,
+        startsAt: { lte: now },
+        endsAt: { gte: now },
+        endedManuallyAt: null,
+      },
+      orderBy: { startsAt: "desc" },
     });
 
-    if (!business || !business.loyaltyProgram) {
-      return NextResponse.json({ error: "Business or loyalty program not found" }, { status: 404 });
+    if (!activeProgram) {
+      return NextResponse.json({ error: "No active loyalty program found" }, { status: 404 });
     }
 
     const customer = await prisma.customer.findUnique({
@@ -40,26 +46,38 @@ export async function GET(request: NextRequest) {
     if (!customer || customer.memberships.length === 0) {
       return NextResponse.json({
         exists: false,
-        totalVisits: 0,
-        currentVisits: 0,
-        requiredVisits: business.loyaltyProgram.requiredVisits,
-        eligibleForReward: false,
+        totalStamps: 0,
+        currentStamps: 0,
+        requiredStamps: activeProgram.requiredVisits,
+        isCompleted: false,
       });
     }
 
     const membership = customer.memberships[0];
 
-    const eligibility = await computeThresholdEligibility(prisma, membership.id, business.loyaltyProgram);
+    // Find the loyalty card for the active program
+    const card = await prisma.loyaltyCard.findUnique({
+      where: {
+        membershipId_loyaltyProgramId: {
+          membershipId: membership.id,
+          loyaltyProgramId: activeProgram.id
+        }
+      },
+      include: { stamps: true }
+    });
+
+    const currentStamps = card ? card.stamps.length : 0;
+    const isCompleted = currentStamps >= activeProgram.requiredVisits;
 
     return NextResponse.json({
       exists: true,
       name: customer.name,
       membershipId: membership.id,
       reviewPromptedAt: membership.reviewPromptedAt,
-      totalVisits: membership.totalVisits,
-      currentVisits: eligibility.qualifyingVisits,
-      requiredVisits: business.loyaltyProgram.requiredVisits,
-      eligibleForReward: eligibility.qualifies,
+      totalStamps: membership.totalVisits, // legacy total lifetime visits across all cards
+      currentStamps,
+      requiredStamps: activeProgram.requiredVisits,
+      isCompleted,
     }, { status: 200 });
 
   } catch (error) {
@@ -67,3 +85,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Failed to fetch progress." }, { status: 500 });
   }
 }
+

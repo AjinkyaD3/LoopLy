@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireBusinessOwner } from "@/lib/auth";
-import { getBillViewUrl } from "@/lib/storage";
-import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/business/requests
  * Returns verification requests belonging to the authenticated owner's business.
- * Resolves bill preview URL via getBillViewUrl (Supabase signed URL or local URL).
+ * A request is only an approval queue entry; card positions are awarded atomically
+ * by the approval route, never by a QR scan or request submission.
  *
  * Security:
  *   - Business resolved via ownerId === user.id — never from client.
@@ -18,12 +17,9 @@ export async function GET(request: Request) {
   try {
     const user = await requireBusinessOwner();
 
-    const business = await prisma.business.findUnique({
-      where: { ownerId: user.id },
-      include: { loyaltyProgram: true },
-    });
+    const business = await prisma.business.findUnique({ where: { ownerId: user.id } });
 
-    if (!business || !business.loyaltyProgram) {
+    if (!business) {
       return NextResponse.json({ error: "No business found for this owner." }, { status: 404 });
     }
 
@@ -47,12 +43,14 @@ export async function GET(request: Request) {
 
     const enrichedRequests = await Promise.all(
       requests.map(async (r) => {
-        const signedBillUrl = r.billImagePath ? await getBillViewUrl(r.billImagePath) : null;
-        const eligibility = await computeThresholdEligibility(prisma, r.membership.id, business.loyaltyProgram!);
+        const issuedCardPositions = r.loyaltyProgramId
+          ? await prisma.loyaltyCardStamp.count({
+              where: { loyaltyCard: { membershipId: r.membership.id, loyaltyProgramId: r.loyaltyProgramId } },
+            })
+          : 0;
         return {
           ...r,
-          membership: { ...r.membership, currentVisits: eligibility.qualifyingVisits },
-          signedBillUrl,
+          membership: { ...r.membership, currentVisits: issuedCardPositions },
         };
       })
     );

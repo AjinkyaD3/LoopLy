@@ -19,6 +19,7 @@ export default function BusinessRewardsPanel() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; msg: string; ok: boolean } | null>(null);
+  const [claimCodes, setClaimCodes] = useState<{ [rewardId: string]: string }>({});
 
   const fetchRewards = useCallback(async () => {
     setLoading(true);
@@ -34,17 +35,30 @@ export default function BusinessRewardsPanel() {
   useEffect(() => { fetchRewards(); }, [fetchRewards]);
 
   async function handleRedeem(rewardId: string) {
+    const code = claimCodes[rewardId]?.trim() || "";
+    if (code.length < 6) return; // Prevent early submission
+
     setActionLoading(rewardId);
     setFeedback(null);
 
     try {
-      const res = await fetch(`/api/business/rewards/${rewardId}/redeem`, { method: "POST" });
+      const res = await fetch(`/api/business/rewards/${rewardId}/redeem`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ claimCode: code }),
+      });
       const data = await res.json();
 
       if (!res.ok) {
         setFeedback({ id: rewardId, msg: data.error || "Failed to redeem.", ok: false });
       } else {
-        setFeedback({ id: rewardId, msg: "Reward successfully redeemed!", ok: true });
+        setFeedback({ id: rewardId, msg: data.message || "Reward successfully redeemed!", ok: true });
+        // Clear the code input on success
+        setClaimCodes(prev => {
+          const next = { ...prev };
+          delete next[rewardId];
+          return next;
+        });
         fetchRewards();
         router.refresh();
       }
@@ -54,6 +68,10 @@ export default function BusinessRewardsPanel() {
       setActionLoading(null);
     }
   }
+
+  const handleCodeChange = (rewardId: string, value: string) => {
+    setClaimCodes(prev => ({ ...prev, [rewardId]: value.toUpperCase() }));
+  };
 
   return (
     <div className="space-y-4">
@@ -78,50 +96,65 @@ export default function BusinessRewardsPanel() {
           No active rewards to redeem right now.
         </div>
       ) : (
-        rewards.map((r) => (
-          <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3 shadow-xs">
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                  <Award className="w-4 h-4" />
+        rewards.map((r) => {
+          const currentCode = claimCodes[r.id] || "";
+          const isValidLength = currentCode.length === 6;
+
+          return (
+            <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                    <Award className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{r.title}</p>
+                    <p className="text-xs text-slate-600 font-semibold mt-0.5">{r.customer.name}</p>
+                    <p className="text-[11px] text-slate-400">{r.customer.mobileNumber}</p>
+                    {r.description && (
+                      <p className="text-[11px] text-slate-500 mt-1">{r.description}</p>
+                    )}
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Expires: {new Date(r.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">{r.title}</p>
-                  <p className="text-xs text-slate-600 font-semibold mt-0.5">{r.customer.name}</p>
-                  <p className="text-[11px] text-slate-400">{r.customer.mobileNumber}</p>
-                  {r.description && (
-                    <p className="text-[11px] text-slate-500 mt-1">{r.description}</p>
-                  )}
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Expires: {new Date(r.expiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                  </p>
-                </div>
+                <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold whitespace-nowrap">
+                  Available
+                </span>
               </div>
-              <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold whitespace-nowrap">
-                Available
-              </span>
-            </div>
 
-            {feedback?.id === r.id && (
-              <p className={`text-xs font-semibold ${feedback.ok ? "text-emerald-700" : "text-rose-600"}`}>
-                {feedback.msg}
-              </p>
-            )}
-
-            <button
-              type="button"
-              disabled={actionLoading === r.id}
-              onClick={() => handleRedeem(r.id)}
-              className="w-full py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
-            >
-              {actionLoading === r.id ? (
-                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Redeeming…</>
-              ) : (
-                <><CheckCircle2 className="w-3.5 h-3.5" /> Redeem Reward</>
+              {feedback?.id === r.id && (
+                <p className={`text-xs font-semibold ${feedback.ok ? "text-emerald-700" : "text-rose-600"}`}>
+                  {feedback.msg}
+                </p>
               )}
-            </button>
-          </div>
-        ))
+
+              <div className="pt-2 border-t border-slate-100 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter 6-char code"
+                  value={currentCode}
+                  onChange={(e) => handleCodeChange(r.id, e.target.value)}
+                  maxLength={6}
+                  className="w-1/2 px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono uppercase tracking-widest focus:ring-2 focus:ring-emerald-600 outline-none"
+                />
+                <button
+                  type="button"
+                  disabled={actionLoading === r.id || !isValidLength}
+                  onClick={() => handleRedeem(r.id)}
+                  className="w-1/2 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                >
+                  {actionLoading === r.id ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Redeeming…</>
+                  ) : (
+                    <><CheckCircle2 className="w-3.5 h-3.5" /> Redeem</>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })
       )}
     </div>
   );

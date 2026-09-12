@@ -40,12 +40,15 @@ async function main() {
     },
   });
 
+  const programAEndsAt = new Date();
+  programAEndsAt.setFullYear(programAEndsAt.getFullYear() + 1);
+
   const businessA = await prisma.business.create({
     data: {
       name: "Bella's Artisan Bakery",
       businessToken: "bakery88x99z",
       ownerId: ownerA.id,
-      loyaltyProgram: {
+      loyaltyPrograms: {
         create: {
           programName: "Sweet Tooth Club",
           requiredVisits: 5,
@@ -54,13 +57,23 @@ async function main() {
           rewardValidityDays: 30,
           verificationMethod: VerificationMethod.BILL,
           isActive: true,
+          startsAt: new Date(),
+          endsAt: programAEndsAt,
         },
       },
     },
     include: {
-      loyaltyProgram: true,
+      loyaltyPrograms: true,
     },
   });
+  
+  // Set the current loyalty program
+  await prisma.business.update({
+    where: { id: businessA.id },
+    data: { loyaltyProgramId: businessA.loyaltyPrograms[0].id }
+  });
+  
+  const currentProgramA = businessA.loyaltyPrograms[0];
   console.log(`✓ Created Business A: ${businessA.name} [Token: ${businessA.businessToken}]`);
 
   // 4. Create Business B Owner & Business B (Gym - VISIT_CONFIRMATION verification)
@@ -73,12 +86,15 @@ async function main() {
     },
   });
 
+  const programBEndsAt = new Date();
+  programBEndsAt.setFullYear(programBEndsAt.getFullYear() + 1);
+
   const businessB = await prisma.business.create({
     data: {
       name: "Apex Fitness Studio",
       businessToken: "apex77v22w11",
       ownerId: ownerB.id,
-      loyaltyProgram: {
+      loyaltyPrograms: {
         create: {
           programName: "Iron Milestone Club",
           requiredVisits: 8,
@@ -87,13 +103,23 @@ async function main() {
           rewardValidityDays: 60,
           verificationMethod: VerificationMethod.VISIT_CONFIRMATION,
           isActive: true,
+          startsAt: new Date(),
+          endsAt: programBEndsAt,
         },
       },
     },
     include: {
-      loyaltyProgram: true,
+      loyaltyPrograms: true,
     },
   });
+
+  // Set the current loyalty program
+  await prisma.business.update({
+    where: { id: businessB.id },
+    data: { loyaltyProgramId: businessB.loyaltyPrograms[0].id }
+  });
+  
+  const currentProgramB = businessB.loyaltyPrograms[0];
   console.log(`✓ Created Business B: ${businessB.name} [Token: ${businessB.businessToken}]`);
 
   // 5. Create Independent Membership for Customer at Business A
@@ -115,9 +141,9 @@ async function main() {
       membershipId: membershipA.id,
       businessId: businessA.id,
       customerId: customer.id,
-      loyaltyProgramId: businessA.loyaltyProgram!.id,
-      title: businessA.loyaltyProgram!.rewardTitle,
-      description: businessA.loyaltyProgram!.rewardDescription,
+      loyaltyProgramId: currentProgramA.id,
+      title: currentProgramA.rewardTitle,
+      description: currentProgramA.rewardDescription,
       status: RewardStatus.AVAILABLE,
       expiresAt: expiresAtA,
     },
@@ -143,6 +169,7 @@ async function main() {
       membershipId: membershipA.id,
       businessId: businessA.id,
       customerId: customer.id,
+      loyaltyProgramId: currentProgramA.id,
       method: VerificationMethod.BILL,
       billImagePath: "bills/seed-bakery-receipt-001.jpg",
       status: RequestStatus.PENDING,
@@ -150,7 +177,7 @@ async function main() {
   });
 
   console.log(`✓ Created Membership A: Customer -> ${businessA.name}`);
-  console.log(`  - Current Progress (lifetime): ${membershipA.totalVisits}/${businessA.loyaltyProgram?.requiredVisits}`);
+  console.log(`  - Current Progress (lifetime): ${membershipA.totalVisits}/${currentProgramA.requiredVisits}`);
   console.log(`  - Total Visits: ${membershipA.totalVisits}`);
   console.log(`  - Active Reward: ${rewardA.title} (Status: ${rewardA.status})`);
   console.log(`  - Pending Request: ID ${pendingRequestA.id} (${pendingRequestA.method})`);
@@ -183,6 +210,7 @@ async function main() {
       membershipId: membershipB.id,
       businessId: businessB.id,
       customerId: customer.id,
+      loyaltyProgramId: currentProgramB.id,
       method: VerificationMethod.VISIT_CONFIRMATION,
       billImagePath: null,
       status: RequestStatus.PENDING,
@@ -190,7 +218,7 @@ async function main() {
   });
 
   console.log(`✓ Created Membership B: Customer -> ${businessB.name}`);
-  console.log(`  - Current Progress (lifetime): ${membershipB.totalVisits}/${businessB.loyaltyProgram?.requiredVisits}`);
+  console.log(`  - Current Progress (lifetime): ${membershipB.totalVisits}/${currentProgramB.requiredVisits}`);
   console.log(`  - Total Visits: ${membershipB.totalVisits}`);
   console.log(`  - Active Rewards: 0`);
   console.log(`  - Pending Request: ID ${pendingRequestB.id} (${pendingRequestB.method})`);

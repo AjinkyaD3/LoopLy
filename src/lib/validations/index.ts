@@ -91,26 +91,36 @@ export const BusinessUpdateSchema = z.object({
   youtubeHandle: z.string().optional().or(z.literal("")),
 });
 
-export const WindowTypeSchema = z.enum(["LIFETIME", "ROLLING", "FIXED_PERIOD"]);
-export type WindowType = z.infer<typeof WindowTypeSchema>;
+export const LoyaltyRewardDefinitionSchema = z.object({
+  cardPosition: z.number().int().min(1).max(20),
+  title: z.string().min(2, "Reward title must be at least 2 characters").max(100).trim(),
+  description: z.string().max(500, "Reward description must be at most 500 characters").trim().default(""),
+});
 
+// A loyalty program is a single, dated loyalty-card promotion. Reward positions
+// are optional card slots: e.g. card positions 3 and 5 on a five-card program.
 export const LoyaltyProgramSchema = z.object({
   programName: z.string().min(2, "Program name must be at least 2 characters").max(100, "Program name must be at most 100 characters").trim(),
-  requiredVisits: z.number().int().min(1, "Required visits must be at least 1").max(100, "Required visits must be at most 100").default(10),
-  windowType: WindowTypeSchema.default("LIFETIME"),
-  windowDays: z.number().int().min(1, "Window must be at least 1 day").max(3650, "Window must be at most 3650 days").nullable().optional(),
-  windowStartsAt: z.coerce.date().nullable().optional(),
-  rewardTitle: z.string().min(2, "Reward title must be at least 2 characters").max(100, "Reward title must be at most 100 characters").trim(),
-  rewardDescription: z.string().max(500, "Reward description must be at most 500 characters").trim().default(""),
-  rewardValidityDays: z.number().int().min(1, "Validity must be at least 1 day").max(365, "Validity must be at most 365 days").default(30),
-  verificationMethod: VerificationMethodSchema.default("VISIT_CONFIRMATION"),
+  startsAt: z.coerce.date(),
+  endsAt: z.coerce.date(),
+  requiredVisits: z.number().int().min(2, "A loyalty card needs at least 2 cards").max(20, "A loyalty card can have at most 20 cards").default(5),
+  rewards: z.array(LoyaltyRewardDefinitionSchema).min(1, "Add at least one reward to the loyalty card").max(20),
+  rewardValidityDays: z.number().int().min(1, "Validity must be at least 1 day").max(365, "Validity must be at most 365 days").default(14),
+  verificationMethod: z.literal("VISIT_CONFIRMATION").default("VISIT_CONFIRMATION"),
   isActive: z.boolean().default(true),
 }).superRefine((data, ctx) => {
-  if (data.windowType === "ROLLING" && !data.windowDays) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Rolling window requires a number of days", path: ["windowDays"] });
+  if (data.endsAt <= data.startsAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "End date must be after start date", path: ["endsAt"] });
   }
-  if (data.windowType === "FIXED_PERIOD" && !data.windowStartsAt) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Fixed period requires a start date", path: ["windowStartsAt"] });
+  const seen = new Set<number>();
+  for (const [index, reward] of data.rewards.entries()) {
+    if (reward.cardPosition > data.requiredVisits) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Reward position must be on the loyalty card", path: ["rewards", index, "cardPosition"] });
+    }
+    if (seen.has(reward.cardPosition)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Each card position can have only one reward", path: ["rewards", index, "cardPosition"] });
+    }
+    seen.add(reward.cardPosition);
   }
 });
 

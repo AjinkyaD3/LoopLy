@@ -33,7 +33,36 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ rewards });
+    const campaignPlays = await prisma.campaignPlay.findMany({
+      where: {
+        campaign: { businessId: business.id },
+        status: "AVAILABLE",
+        claimCode: { not: null },
+      },
+      include: {
+        campaign: { select: { name: true } },
+      },
+      orderBy: { playedAt: "desc" },
+    });
+
+    // Map CampaignPlays to match the structure expected by the UI
+    const mappedPlays = campaignPlays.map(play => ({
+      id: play.id,
+      title: `Campaign: ${play.campaign.name}`,
+      description: `Prize: ${play.revealedPrize}`,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(), // Dummy 30 days
+      createdAt: play.playedAt.toISOString(),
+      customer: { name: play.customerName || "Guest", mobileNumber: play.mobileNumber },
+      type: "CAMPAIGN",
+    }));
+
+    const mappedRewards = rewards.map(r => ({ ...r, type: "LOYALTY" }));
+
+    const combined = [...mappedRewards, ...mappedPlays].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    return NextResponse.json({ rewards: combined });
   } catch (err: unknown) {
     const msg = (err as Error).message;
     if (msg === "UNAUTHORIZED") return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

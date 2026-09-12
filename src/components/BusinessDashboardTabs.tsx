@@ -23,26 +23,33 @@ import {
   X,
 } from "lucide-react";
 
+interface RewardDef {
+  id: string;
+  cardPosition: number;
+  title: string;
+  description: string;
+}
+
 interface LoyaltyData {
   id: string;
   programName: string;
   requiredVisits: number;
-  windowType: "LIFETIME" | "ROLLING" | "FIXED_PERIOD";
-  windowDays: number | null;
-  windowStartsAt: string | Date | null;
-  rewardTitle: string;
-  rewardDescription: string | null;
+  startsAt: string | Date;
+  endsAt: string | Date;
+  endedManuallyAt: string | Date | null;
+  isActive: boolean;
   rewardValidityDays: number;
   verificationMethod: VerificationMethod;
-  isActive: boolean;
   retiredScratchNotice: boolean;
+  rewardDefinitions: RewardDef[];
+  _count: { cards: number };
 }
 
 interface BusinessData {
   id: string;
   name: string;
   businessToken: string;
-  loyaltyProgram: LoyaltyData;
+  loyaltyPrograms: LoyaltyData[];
 }
 
 interface BusinessDashboardTabsProps {
@@ -64,27 +71,155 @@ export default function BusinessDashboardTabs({
     "overview" | "requests" | "rewards" | "members" | "qr" | "loyalty"
   >("overview");
 
-  const [scratchNoticeVisible, setScratchNoticeVisible] = useState(business.loyaltyProgram.retiredScratchNotice);
-  const [dismissingNotice, setDismissingNotice] = useState(false);
+  const now = new Date();
+  const activeProgram = business.loyaltyPrograms.find(p => !p.endedManuallyAt && new Date(p.endsAt) >= now);
+  const historicalPrograms = business.loyaltyPrograms.filter(p => p.id !== activeProgram?.id);
 
-  const [programName, setProgramName] = useState(business.loyaltyProgram.programName);
-  const [requiredVisits, setRequiredVisits] = useState(business.loyaltyProgram.requiredVisits);
-  const [windowType, setWindowType] = useState(business.loyaltyProgram.windowType);
-  const [windowDays, setWindowDays] = useState(business.loyaltyProgram.windowDays ?? 90);
-  const [windowStartsAt, setWindowStartsAt] = useState(
-    business.loyaltyProgram.windowStartsAt ? new Date(business.loyaltyProgram.windowStartsAt).toISOString().slice(0, 10) : ""
+  const [scratchNoticeVisible, setScratchNoticeVisible] = useState(
+    business.loyaltyPrograms.some(p => p.retiredScratchNotice)
   );
-  const [rewardTitle, setRewardTitle] = useState(business.loyaltyProgram.rewardTitle);
-  const [rewardDescription, setRewardDescription] = useState(business.loyaltyProgram.rewardDescription || "");
-  const [rewardValidityDays, setRewardValidityDays] = useState(business.loyaltyProgram.rewardValidityDays);
-  const [verificationMethod, setVerificationMethod] = useState<VerificationMethod>(
-    business.loyaltyProgram.verificationMethod
-  );
-  const [isActive, setIsActive] = useState(business.loyaltyProgram.isActive);
+  const [dismissingNotice, setDismissingNotice] = useState(false);
 
   const [savingLoyalty, setSavingLoyalty] = useState(false);
   const [loyaltySuccess, setLoyaltySuccess] = useState<string | null>(null);
   const [loyaltyError, setLoyaltyError] = useState<string | null>(null);
+
+
+  // Edit mode states
+  const [isEditingActive, setIsEditingActive] = useState(false);
+  const [editIsActive, setEditIsActive] = useState(false);
+  const [editRewards, setEditRewards] = useState<{ id: string; title: string; description: string }[]>([]);
+
+  function startEditing() {
+    if (!activeProgram) return;
+    setEditIsActive(activeProgram.isActive);
+    setEditRewards(activeProgram.rewardDefinitions.map(r => ({ id: r.id, title: r.title, description: r.description })));
+    setIsEditingActive(true);
+  }
+
+  function handleEditRewardChange(id: string, field: "title" | "description", value: string) {
+    setEditRewards(current => current.map(r => r.id === id ? { ...r, [field]: value } : r));
+  }
+
+  async function handleSaveEdits() {
+    if (!activeProgram) return;
+    setSavingLoyalty(true);
+    setLoyaltyError(null);
+    setLoyaltySuccess(null);
+    try {
+      const res = await fetch("/api/business/loyalty", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isActive: editIsActive,
+          rewards: editRewards,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update program");
+      
+      setLoyaltySuccess("Program updated successfully.");
+      setIsEditingActive(false);
+      router.refresh();
+      setTimeout(() => setLoyaltySuccess(null), 3000);
+    } catch (e: any) {
+      setLoyaltyError(e.message || "Network error");
+    } finally {
+      setSavingLoyalty(false);
+    }
+  }
+
+  // Form states for creating new program
+  const [newProgramName, setNewProgramName] = useState("My Loyalty Card");
+  
+  function localDate(daysFromNow: number) {
+    const date = new Date();
+    date.setDate(date.getDate() + daysFromNow);
+    return date.toISOString().slice(0, 10);
+  }
+  
+  const [newStartsAt, setNewStartsAt] = useState(localDate(0));
+  const [newEndsAt, setNewEndsAt] = useState(localDate(30));
+  const [newRequiredVisits, setNewRequiredVisits] = useState(5);
+  const [newRewards, setNewRewards] = useState<{ cardPosition: number; title: string; description: string }[]>([
+    { cardPosition: 5, title: "Your reward", description: "" },
+  ]);
+
+  const newPositions = Array.from({ length: newRequiredVisits }, (_, index) => index + 1);
+
+  function toggleNewReward(position: number) {
+    setNewRewards((current) => {
+      const existing = current.find((reward) => reward.cardPosition === position);
+      return existing
+        ? current.filter((reward) => reward.cardPosition !== position)
+        : [...current, { cardPosition: position, title: "New reward", description: "" }].sort((a, b) => a.cardPosition - b.cardPosition);
+    });
+  }
+
+  function changeNewReward(position: number, field: "title" | "description", value: string) {
+    setNewRewards((current) => current.map((reward) => reward.cardPosition === position ? { ...reward, [field]: value } : reward));
+  }
+
+  async function handleCreateLoyalty(e: React.FormEvent) {
+    e.preventDefault();
+    setLoyaltyError(null);
+    setLoyaltySuccess(null);
+    
+    const validRewards = newRewards.filter((reward) => reward.cardPosition <= newRequiredVisits);
+    if (!validRewards.length) return setLoyaltyError("Choose at least one card position that earns a reward.");
+
+    setSavingLoyalty(true);
+
+    try {
+      const payload = {
+        programName: newProgramName.trim(),
+        startsAt: new Date(`${newStartsAt}T00:00:00`).toISOString(),
+        endsAt: new Date(`${newEndsAt}T23:59:59`).toISOString(),
+        requiredVisits: newRequiredVisits,
+        rewards: validRewards,
+        rewardValidityDays: 14, // Default per requested behavior
+      };
+
+      const res = await fetch("/api/business/loyalty", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setLoyaltyError(data.error || "Failed to create loyalty program.");
+        setSavingLoyalty(false);
+        return;
+      }
+
+      setLoyaltySuccess("New loyalty program started successfully!");
+      setSavingLoyalty(false);
+      router.refresh();
+      setTimeout(() => setLoyaltySuccess(null), 3000);
+    } catch {
+      setLoyaltyError("Network error. Please try again.");
+      setSavingLoyalty(false);
+    }
+  }
+
+  async function handleEndProgram() {
+    if (!confirm("Are you sure you want to end this program early?")) return;
+    
+    setSavingLoyalty(true);
+    try {
+      const res = await fetch("/api/business/loyalty", { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to end program");
+      
+      setLoyaltySuccess("Program ended successfully.");
+      router.refresh();
+      setTimeout(() => setLoyaltySuccess(null), 3000);
+    } catch (e) {
+      setLoyaltyError("Network error. Please try again.");
+    } finally {
+      setSavingLoyalty(false);
+    }
+  }
 
   async function handleDismissScratchNotice() {
     setDismissingNotice(true);
@@ -93,59 +228,6 @@ export default function BusinessDashboardTabs({
       setScratchNoticeVisible(false);
     } finally {
       setDismissingNotice(false);
-    }
-  }
-
-  async function handleUpdateLoyalty(e: React.FormEvent) {
-    e.preventDefault();
-    setLoyaltyError(null);
-    setLoyaltySuccess(null);
-
-    if (windowType === "ROLLING" && (!windowDays || windowDays < 1)) {
-      setLoyaltyError("Rolling window requires a number of days.");
-      return;
-    }
-    if (windowType === "FIXED_PERIOD" && !windowStartsAt) {
-      setLoyaltyError("Fixed period requires a start date.");
-      return;
-    }
-
-    setSavingLoyalty(true);
-
-    try {
-      const payload = {
-        programName: programName.trim(),
-        requiredVisits: Number(requiredVisits),
-        windowType,
-        windowDays: windowType === "ROLLING" ? Number(windowDays) : null,
-        windowStartsAt: windowType === "FIXED_PERIOD" ? new Date(windowStartsAt).toISOString() : null,
-        rewardTitle: rewardTitle.trim(),
-        rewardDescription: rewardDescription.trim(),
-        rewardValidityDays: Number(rewardValidityDays),
-        verificationMethod,
-        isActive,
-      };
-
-      const res = await fetch("/api/business/loyalty", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        setLoyaltyError(data.error || "Failed to update loyalty settings.");
-        setSavingLoyalty(false);
-        return;
-      }
-
-      setLoyaltySuccess("Loyalty program updated successfully!");
-      setSavingLoyalty(false);
-      router.refresh();
-      setTimeout(() => setLoyaltySuccess(null), 3000);
-    } catch {
-      setLoyaltyError("Network error. Please try again.");
-      setSavingLoyalty(false);
     }
   }
 
@@ -271,38 +353,38 @@ export default function BusinessDashboardTabs({
                     Active Visits Program
                   </span>
                   <h3 className="text-lg font-bold text-slate-900 leading-tight">
-                    {programName}
+                    {activeProgram?.programName || "No Active Program"}
                   </h3>
                   <p className="text-xs text-slate-500">{business.name}</p>
                 </div>
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                    isActive ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"
+                    activeProgram?.isActive ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"
                   }`}
                 >
-                  {isActive ? "Program Active" : "Paused"}
+                  {activeProgram?.isActive ? "Program Active" : "Paused"}
                 </span>
               </div>
 
               <div className="space-y-2 text-xs text-slate-600">
                 <div className="flex items-center justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-500">Reward Benefit</span>
-                  <span className="font-bold text-slate-900">{rewardTitle}</span>
+                  <span className="font-bold text-slate-900">{activeProgram?.rewardDefinitions[0]?.title || "-"}</span>
                 </div>
-                {rewardDescription && (
+                {activeProgram?.rewardDefinitions[0]?.description && (
                   <div className="py-1 border-b border-slate-100 text-slate-500">
-                    <p className="leading-relaxed">{rewardDescription}</p>
+                    <p className="leading-relaxed">{activeProgram?.rewardDefinitions[0]?.description || ""}</p>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-500">Required Visits</span>
-                  <span className="font-semibold text-slate-800">{requiredVisits} visits</span>
+                  <span className="font-semibold text-slate-800">{activeProgram?.requiredVisits || 0} visits</span>
                 </div>
 
                 <div className="flex items-center justify-between py-1">
                   <span className="text-slate-500">Reward Validity</span>
-                  <span className="font-semibold text-slate-800">{rewardValidityDays} days</span>
+                  <span className="font-semibold text-slate-800">{activeProgram?.rewardValidityDays || 0} days</span>
                 </div>
               </div>
 
@@ -312,7 +394,7 @@ export default function BusinessDashboardTabs({
                   onClick={() => setActiveTab("loyalty")}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-xl transition-colors"
                 >
-                  Edit Loyalty Program
+                  Manage Loyalty Program
                 </button>
                 <button
                   type="button"
@@ -355,7 +437,7 @@ export default function BusinessDashboardTabs({
           </div>
           <BusinessRequestsPanel
             businessName={business.name}
-            requiredVisits={business.loyaltyProgram.requiredVisits}
+            requiredVisits={activeProgram?.requiredVisits || 5}
           />
         </div>
       )}
@@ -396,21 +478,255 @@ export default function BusinessDashboardTabs({
 
       {/* TAB 3: LOYALTY PROGRAM SETTINGS */}
       {activeTab === "loyalty" && (
-        <div className="max-w-2xl bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">Loyalty Program Configuration</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Update your visits tracking configuration.
-            </p>
-          </div>
+        <div className="space-y-6 max-w-2xl">
+                    {/* Active Program Details (if any) */}
+          {activeProgram ? (
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
+                    Active Program
+                  </span>
+                  <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                    {activeProgram.programName}
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {new Date(activeProgram.startsAt).toLocaleDateString()} – {new Date(activeProgram.endsAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!isEditingActive ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={startEditing}
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleEndProgram}
+                        disabled={savingLoyalty}
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        {savingLoyalty ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertCircle className="w-3 h-3" />}
+                        End Program
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingActive(false)}
+                        className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 text-[11px] font-bold rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSaveEdits}
+                        disabled={savingLoyalty}
+                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                      >
+                        {savingLoyalty && <Loader2 className="w-3 h-3 animate-spin" />}
+                        Save Changes
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
 
+              {isEditingActive ? (
+                <div className="space-y-4">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editIsActive}
+                      onChange={(e) => setEditIsActive(e.target.checked)}
+                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span>Loyalty program is active and accepting visits</span>
+                  </label>
+                  <div className="space-y-3">
+                    {activeProgram.rewardDefinitions.map((reward) => {
+                      const editingReward = editRewards.find(r => r.id === reward.id);
+                      if (!editingReward) return null;
+                      return (
+                        <div key={reward.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                          <span className="text-[11px] font-bold text-slate-500 uppercase">Reward at card {reward.cardPosition}</span>
+                          <input
+                            value={editingReward.title}
+                            onChange={(e) => handleEditRewardChange(reward.id, "title", e.target.value)}
+                            placeholder="Reward title"
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-indigo-400"
+                          />
+                          <input
+                            value={editingReward.description || ""}
+                            onChange={(e) => handleEditRewardChange(reward.id, "description", e.target.value)}
+                            placeholder="Short description (optional)"
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-indigo-400"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-xs text-slate-600">
+                  <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500">Required Visits</span>
+                    <span className="font-semibold text-slate-800">{activeProgram.requiredVisits}</span>
+                  </div>
+                  <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500">Status</span>
+                    <span className={`font-bold ${activeProgram.isActive ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {activeProgram.isActive ? "Active (Accepting Visits)" : "Paused"}
+                    </span>
+                  </div>
+                  {activeProgram.rewardDefinitions.map((reward) => (
+                    <div key={reward.id} className="py-2 border-b border-slate-100 flex justify-between">
+                      <div>
+                        <span className="text-slate-500 font-semibold block">Reward at card {reward.cardPosition}</span>
+                        <span className="font-bold text-slate-900 block">{reward.title}</span>
+                        {reward.description && <span className="text-slate-400 block">{reward.description}</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">Start New Loyalty Program</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Your shop QR stays the same. Customers scanning it will see this new program.
+                </p>
+              </div>
+
+              <form onSubmit={handleCreateLoyalty} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-800 mb-1">Program Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProgramName}
+                    onChange={(e) => setNewProgramName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-800 mb-1">Starts</label>
+                    <input
+                      type="date"
+                      required
+                      value={newStartsAt}
+                      onChange={(e) => setNewStartsAt(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-800 mb-1">Ends</label>
+                    <input
+                      type="date"
+                      required
+                      value={newEndsAt}
+                      onChange={(e) => setNewEndsAt(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-800 mb-1">Cards to collect</label>
+                  <input
+                    type="number"
+                    min="2"
+                    max="20"
+                    value={newRequiredVisits}
+                    onChange={(e) => setNewRequiredVisits(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+
+                <section className="space-y-3 pt-4 border-t border-slate-100">
+                  <div>
+                    <h2 className="text-xs font-semibold text-slate-800">Choose reward positions</h2>
+                    <p className="text-[11px] text-slate-500">Select the card positions that issue rewards.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-5 gap-2">
+                    {newPositions.map((position) => {
+                      const selected = newRewards.some((reward) => reward.cardPosition === position);
+                      return (
+                        <button
+                          key={position}
+                          type="button"
+                          onClick={() => toggleNewReward(position)}
+                          className={`rounded-xl border p-2 text-xs font-bold transition-colors ${
+                            selected ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          {position}
+                          {selected ? " 🎁" : ""}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {newRewards.filter((reward) => reward.cardPosition <= newRequiredVisits).map((reward) => (
+                    <div key={reward.cardPosition} className="rounded-xl bg-slate-50 p-3 space-y-2 border border-slate-100">
+                      <p className="text-xs font-semibold text-slate-800">Reward on card {reward.cardPosition}</p>
+                      <input
+                        value={reward.title}
+                        onChange={(e) => changeNewReward(reward.cardPosition, "title", e.target.value)}
+                        placeholder="Reward title"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                        required
+                      />
+                      <input
+                        value={reward.description}
+                        onChange={(e) => changeNewReward(reward.cardPosition, "description", e.target.value)}
+                        placeholder="Short description (optional)"
+                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                      />
+                    </div>
+                  ))}
+                </section>
+
+                <div className="pt-2 flex items-center justify-end border-t border-slate-100 mt-4">
+                  <button
+                    type="submit"
+                    disabled={savingLoyalty}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {savingLoyalty ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-3.5 h-3.5" />
+                        Start Program
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Messages */}
           {loyaltySuccess && (
             <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>{loyaltySuccess}</span>
             </div>
           )}
-
           {loyaltyError && (
             <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
@@ -418,205 +734,31 @@ export default function BusinessDashboardTabs({
             </div>
           )}
 
-          <form onSubmit={handleUpdateLoyalty} className="space-y-4">
-            <div>
-              <label htmlFor="edit-program-name" className="block text-xs font-semibold text-slate-800 mb-1">
-                Program Name
-              </label>
-              <input
-                id="edit-program-name"
-                type="text"
-                required
-                value={programName}
-                onChange={(e) => setProgramName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label htmlFor="edit-visits" className="block text-xs font-semibold text-slate-800 mb-1">
-                  Required Visits
-                </label>
-                <input
-                  id="edit-visits"
-                  type="number"
-                  min={1}
-                  max={100}
-                  required
-                  value={requiredVisits}
-                  onChange={(e) => setRequiredVisits(parseInt(e.target.value, 10) || 1)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="edit-validity" className="block text-xs font-semibold text-slate-800 mb-1">
-                  Reward Validity (Days)
-                </label>
-                <input
-                  id="edit-validity"
-                  type="number"
-                  min={1}
-                  max={365}
-                  required
-                  value={rewardValidityDays}
-                  onChange={(e) => setRewardValidityDays(parseInt(e.target.value, 10) || 30)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-xs font-semibold text-slate-800">
-                How should the threshold be counted?
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["LIFETIME", "ROLLING", "FIXED_PERIOD"] as const).map((wt) => (
-                  <button
-                    key={wt}
-                    type="button"
-                    onClick={() => setWindowType(wt)}
-                    className={`p-2.5 rounded-xl border text-[11px] font-semibold transition-colors ${
-                      windowType === wt
-                        ? "bg-indigo-50 border-indigo-300 text-indigo-700 ring-1 ring-indigo-200"
-                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    {wt === "LIFETIME" ? "Lifetime" : wt === "ROLLING" ? "Rolling Window" : "Fixed Period"}
-                  </button>
+          {/* Historical Programs List */}
+          {historicalPrograms.length > 0 && (
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs mt-6 space-y-4">
+              <h3 className="text-base font-bold text-slate-900">Program History</h3>
+              <div className="space-y-4">
+                {historicalPrograms.map((program) => (
+                  <div key={program.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/50">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm">{program.programName}</h4>
+                        <p className="text-[11px] text-slate-500">
+                          {new Date(program.startsAt).toLocaleDateString()} – {program.endedManuallyAt ? new Date(program.endedManuallyAt).toLocaleDateString() : new Date(program.endsAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <span className="px-2 py-1 bg-slate-200 text-slate-600 text-[10px] font-bold rounded-md">Ended</span>
+                    </div>
+                    <div className="text-xs text-slate-600 flex flex-col gap-1">
+                      <span>Required Visits: {program.requiredVisits}</span>
+                      <span>Cards completed: {program._count?.cards || 0}</span>
+                    </div>
+                  </div>
                 ))}
               </div>
-
-              {windowType === "ROLLING" && (
-                <div>
-                  <label htmlFor="edit-window-days" className="block text-xs font-semibold text-slate-800 mb-1">
-                    Rolling Window (Days)
-                  </label>
-                  <input
-                    id="edit-window-days"
-                    type="number"
-                    min={1}
-                    max={3650}
-                    required
-                    value={windowDays}
-                    onChange={(e) => setWindowDays(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  />
-                </div>
-              )}
-
-              {windowType === "FIXED_PERIOD" && (
-                <div>
-                  <label htmlFor="edit-window-starts-at" className="block text-xs font-semibold text-slate-800 mb-1">
-                    Counting Since
-                  </label>
-                  <input
-                    id="edit-window-starts-at"
-                    type="date"
-                    required
-                    value={windowStartsAt}
-                    onChange={(e) => setWindowStartsAt(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  />
-                </div>
-              )}
             </div>
-
-            <div>
-              <label htmlFor="edit-reward-title" className="block text-xs font-semibold text-slate-800 mb-1">
-                Reward Title
-              </label>
-              <input
-                id="edit-reward-title"
-                type="text"
-                required
-                value={rewardTitle}
-                onChange={(e) => setRewardTitle(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="edit-reward-desc" className="block text-xs font-semibold text-slate-800 mb-1">
-                Description
-              </label>
-              <textarea
-                id="edit-reward-desc"
-                rows={2}
-                value={rewardDescription}
-                onChange={(e) => setRewardDescription(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 resize-none"
-              />
-            </div>
-
-            <div className="space-y-2 pt-4 border-t border-slate-200 mt-6">
-              <label className="block text-xs font-semibold text-slate-800">Verification Method</label>
-              <div className="grid sm:grid-cols-2 gap-2">
-                <label
-                  className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer text-xs ${
-                    verificationMethod === VerificationMethod.VISIT_CONFIRMATION
-                      ? "bg-indigo-50/60 border-indigo-300 font-semibold"
-                      : "bg-white border-slate-200"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="editVerificationMethod"
-                    checked={verificationMethod === VerificationMethod.VISIT_CONFIRMATION}
-                    onChange={() => setVerificationMethod(VerificationMethod.VISIT_CONFIRMATION)}
-                  />
-                  <span>Visit Confirmation</span>
-                </label>
-
-                <label
-                  className={`p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer text-xs ${
-                    verificationMethod === VerificationMethod.BILL
-                      ? "bg-indigo-50/60 border-indigo-300 font-semibold"
-                      : "bg-white border-slate-200"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="editVerificationMethod"
-                    checked={verificationMethod === VerificationMethod.BILL}
-                    onChange={() => setVerificationMethod(VerificationMethod.BILL)}
-                  />
-                  <span>Bill Upload</span>
-                </label>
-              </div>
-            </div>
-
-            <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-              <label className="flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isActive}
-                  onChange={(e) => setIsActive(e.target.checked)}
-                  className="rounded text-indigo-600 focus:ring-indigo-500"
-                />
-                <span>Loyalty program is active and accepting visits</span>
-              </label>
-
-              <button
-                type="submit"
-                disabled={savingLoyalty}
-                className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {savingLoyalty ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-3.5 h-3.5" />
-                    Save Changes
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+          )}
         </div>
       )}
     </div>

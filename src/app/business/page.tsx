@@ -27,7 +27,16 @@ export default async function BusinessDashboardPage() {
   // Intelligently check if the owner has already configured a business
   const business = await prisma.business.findUnique({
     where: { ownerId: user.id },
-    include: { loyaltyProgram: true },
+    include: {
+      loyaltyProgram: true, // Legacy pointer
+      loyaltyPrograms: {
+        orderBy: { startsAt: "desc" },
+        include: {
+          rewardDefinitions: { orderBy: { cardPosition: "asc" } },
+          _count: { select: { cards: true } },
+        },
+      }
+    },
   });
 
   // If business is configured, fetch live membership count & QR assets
@@ -36,7 +45,7 @@ export default async function BusinessDashboardPage() {
   let qrDataUrl = "";
   let memberCount = 0;
 
-  if (business && business.loyaltyProgram) {
+  if (business) {
     joinUrl = getBusinessJoinUrl(business.businessToken);
     [qrSvg, qrDataUrl, memberCount] = await Promise.all([
       generateQRCodeSvg(joinUrl),
@@ -146,13 +155,13 @@ export default async function BusinessDashboardPage() {
             </div>
 
             {/* Loyalty Program Section */}
-            {!business.loyaltyProgram ? (
+            {business.loyaltyPrograms.length === 0 ? (
               <div className="p-8 rounded-2xl bg-white border border-slate-200 border-dashed text-center space-y-4">
                 <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">No Active Loyalty Program</h3>
+                  <h3 className="text-base font-bold text-slate-900">No Loyalty Program Found</h3>
                   <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
                     Start rewarding your customers! Create a Visits or Scratch Card program to generate your permanent QR code.
                   </p>
@@ -171,7 +180,7 @@ export default async function BusinessDashboardPage() {
                   id: business.id,
                   name: business.name,
                   businessToken: business.businessToken,
-                  loyaltyProgram: business.loyaltyProgram,
+                  loyaltyPrograms: business.loyaltyPrograms,
                 }}
                 joinUrl={joinUrl}
                 qrSvg={qrSvg}

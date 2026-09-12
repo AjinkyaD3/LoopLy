@@ -95,6 +95,13 @@ export async function POST(
             throw new Error("RETRY_DRAW");
           }
 
+          // Generate a 6-character claim code if they won a prize
+          let claimCode = null;
+          const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+          claimCode = Array.from({ length: 6 })
+            .map(() => chars.charAt(Math.floor(Math.random() * chars.length)))
+            .join("");
+
           return tx.campaignPlay.create({
             data: {
               campaignId: campaign.id,
@@ -102,6 +109,8 @@ export async function POST(
               customerName: customerName || null,
               wonPrizeId: chosen.id,
               revealedPrize: chosen.title,
+              claimCode,
+              status: "AVAILABLE",
             },
           });
         });

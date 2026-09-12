@@ -99,7 +99,7 @@ export default function BusinessRequestsPanel({
           decision === "APPROVED"
             ? data.rewardEarned
               ? `✅ Approved! Reward earned. Claim Code: ${data.claimCode}`
-              : `✅ Approved! ${data.membershipCurrentVisits}/${requiredVisits} visits.`
+              : `✅ Approved! Loyalty card ${data.cardPosition}/${requiredVisits} awarded.`
             : "❌ Request rejected.";
         setFeedback({ id: requestId, type: "success", msg });
         fetchRequests();
@@ -194,10 +194,10 @@ export default function BusinessRequestsPanel({
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
                 <span className="flex items-center gap-1.5">
                   <Award className="w-3.5 h-3.5 text-indigo-500" />
-                  Visits toward reward
+                  Loyalty card progress
                 </span>
                 <span className="font-bold text-slate-800">
-                  {r.membership.currentVisits}/{requiredVisits}
+                  {r.membership.currentVisits}/{requiredVisits} cards
                 </span>
               </div>
 

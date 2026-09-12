@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireBusinessOwner } from "@/lib/auth";
 import { VerificationReviewSchema } from "@/lib/validations";
-import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 function generateClaimCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -15,30 +14,6 @@ function generateClaimCode(): string {
 
 export const dynamic = "force-dynamic";
 
-/**
- * PATCH /api/business/requests/[requestId]
- * Approve or reject a pending verification request.
- *
- * APPROVE (atomic Prisma transaction):
- *   1. Re-verify ownership and PENDING status inside the transaction.
- *   2. Mark request APPROVED + reviewedAt.
- *   3. Create immutable Visit (unique verificationRequestId prevents duplicate visits).
- *   4. Increment membership totalVisits (lifetime tally only — no resettable counter).
- *   5. Compute threshold eligibility per the program's window (LIFETIME/ROLLING/
- *      FIXED_PERIOD) via computeThresholdEligibility() — if it qualifies, create a Reward
- *      stamped with the next ordinal thresholdCycle. Reward.@@unique([membershipId,
- *      loyaltyProgramId, thresholdCycle]) is the DB-level guard against ever minting the
- *      same cycle twice, even under a concurrent-approval race.
- *
- * REJECT:
- *   - Mark request REJECTED + reviewedAt + optional rejectionReason.
- *   - No Visit, no membership change, no Reward.
- *
- * Security:
- *   - Business resolved via ownerId only (never from body).
- *   - requestId cross-checked against ownedBusiness.id inside transaction.
- *   - Unique constraint on Visit.verificationRequestId prevents double-approval race conditions.
- */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { requestId: string } }
@@ -59,18 +34,13 @@ export async function PATCH(
 
     const { status: decision, rejectionReason } = parsed.data;
 
-    // Resolve owner's business (tenant isolation)
-    const business = await prisma.business.findUnique({
-      where: { ownerId: user.id },
-      include: { loyaltyProgram: true },
-    });
+    const business = await prisma.business.findUnique({ where: { ownerId: user.id } });
 
-    if (!business || !business.loyaltyProgram) {
+    if (!business) {
       return NextResponse.json({ error: "No business found for this owner." }, { status: 404 });
     }
 
     if (decision === "REJECTED") {
-      // Simple update — no visit, no membership change
       const vr = await prisma.visitRequest.findUnique({ where: { id: requestId } });
       if (!vr) return NextResponse.json({ error: "Verification request not found." }, { status: 404 });
       if (vr.businessId !== business.id) return NextResponse.json({ error: "Forbidden." }, { status: 403 });
@@ -86,12 +56,10 @@ export async function PATCH(
       return NextResponse.json({ success: true, request: updated });
     }
 
-    // APPROVE — atomic transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Re-fetch inside transaction for consistency
       const vr = await tx.visitRequest.findUnique({
         where: { id: requestId },
-        include: { membership: true },
+        include: { membership: true, loyaltyProgram: { include: { rewardDefinitions: true } } },
       });
 
       if (!vr) throw new Error("NOT_FOUND");
@@ -99,15 +67,29 @@ export async function PATCH(
       if (vr.status !== "PENDING") throw new Error("ALREADY_PROCESSED");
 
       const now = new Date();
+      let program = vr.loyaltyProgram;
 
-      // 1. Approve the request
+      if (!program) {
+        program = await tx.loyaltyProgram.findFirst({
+          where: {
+            businessId: business.id,
+            startsAt: { lte: now },
+            endsAt: { gte: now },
+            endedManuallyAt: null,
+          },
+          orderBy: { startsAt: "desc" },
+          include: { rewardDefinitions: true }
+        });
+      }
+
+      if (!program) throw new Error("PROGRAM_NOT_FOUND");
+
       await tx.visitRequest.update({
         where: { id: requestId },
         data: { status: "APPROVED", reviewedAt: now },
       });
 
-      // 2. Create immutable Visit (unique constraint on verificationRequestId prevents double)
-      const newVisit = await tx.visit.create({
+      await tx.visit.create({
         data: {
           membershipId: vr.membershipId,
           businessId: vr.businessId,
@@ -116,21 +98,27 @@ export async function PATCH(
         },
       });
 
-      // 3. Increment lifetime visit tally
       const updatedMembership = await tx.membership.update({
         where: { id: vr.membershipId },
         data: { totalVisits: { increment: 1 } },
       });
 
-      const program = business.loyaltyProgram!;
-      const { requiredVisits, rewardTitle, rewardDescription, rewardValidityDays, id: loyaltyProgramId } = program;
+      const card = await tx.loyaltyCard.upsert({
+        where: { membershipId_loyaltyProgramId: { membershipId: vr.membershipId, loyaltyProgramId: program.id } },
+        create: { membershipId: vr.membershipId, loyaltyProgramId: program.id },
+        update: {},
+      });
+      const issuedStampCount = await tx.loyaltyCardStamp.count({ where: { loyaltyCardId: card.id } });
+      const cardPosition = issuedStampCount + 1;
+      if (cardPosition > program.requiredVisits) throw new Error("CARD_COMPLETE");
 
+      await tx.loyaltyCardStamp.create({
+        data: { loyaltyCardId: card.id, visitRequestId: vr.id, cardPosition, awardedAt: now },
+      });
+
+      const rewardDefinition = program.rewardDefinitions.find((definition) => definition.cardPosition === cardPosition);
       let reward = null;
-
-      // 4. Check windowed threshold eligibility and create reward if earned
-      const eligibility = await computeThresholdEligibility(tx, vr.membershipId, program);
-
-      if (eligibility.qualifies) {
+      if (rewardDefinition) {
         const claimCode = generateClaimCode();
 
         reward = await tx.reward.create({
@@ -138,24 +126,24 @@ export async function PATCH(
             membershipId: vr.membershipId,
             businessId: vr.businessId,
             customerId: vr.customerId,
-            loyaltyProgramId,
-            title: rewardTitle,
-            description: rewardDescription,
+            loyaltyProgramId: program.id,
+            loyaltyCardId: card.id,
+            loyaltyRewardDefinitionId: rewardDefinition.id,
+            title: rewardDefinition.title,
+            description: rewardDefinition.description,
             status: "AVAILABLE",
             type: "STANDARD",
             claimCode,
-            thresholdCycle: eligibility.nextCycle,
-            thresholdVisitId: newVisit.id,
-            expiresAt: new Date(now.getTime() + rewardValidityDays * 24 * 60 * 60 * 1000),
+            expiresAt: new Date(now.getTime() + program.rewardValidityDays * 24 * 60 * 60 * 1000),
           },
         });
       }
 
       return {
         membershipTotalVisits: updatedMembership.totalVisits,
-        qualifyingVisits: eligibility.qualifyingVisits,
+        cardPosition,
         rewardEarned: reward !== null,
-        requiredVisits,
+        requiredVisits: program.requiredVisits,
         claimCode: reward?.claimCode,
       };
     });
@@ -164,12 +152,12 @@ export async function PATCH(
       success: true,
       approved: true,
       membershipTotalVisits: result.membershipTotalVisits,
-      qualifyingVisits: result.qualifyingVisits,
+      cardPosition: result.cardPosition,
       rewardEarned: result.rewardEarned,
       claimCode: result.claimCode,
       message: result.rewardEarned
         ? "Visit approved and reward earned!"
-        : `Visit approved. ${result.qualifyingVisits}/${result.requiredVisits} visits toward next reward.`,
+        : `Visit approved. Loyalty card position ${result.cardPosition}/${result.requiredVisits} awarded.`,
     });
   } catch (err: unknown) {
     const msg = (err as Error).message;
@@ -177,6 +165,8 @@ export async function PATCH(
     if (msg === "FORBIDDEN_NOT_BUSINESS_OWNER" || msg === "FORBIDDEN") return NextResponse.json({ error: "Forbidden." }, { status: 403 });
     if (msg === "NOT_FOUND") return NextResponse.json({ error: "Verification request not found." }, { status: 404 });
     if (msg === "ALREADY_PROCESSED") return NextResponse.json({ error: "This request has already been reviewed." }, { status: 409 });
+    if (msg === "PROGRAM_NOT_FOUND") return NextResponse.json({ error: "The loyalty program for this request no longer exists." }, { status: 409 });
+    if (msg === "CARD_COMPLETE") return NextResponse.json({ error: "This customer has already completed this loyalty card. Reject this request instead." }, { status: 409 });
     console.error("Review verification request error:", err);
     return NextResponse.json({ error: "Failed to process verification request." }, { status: 500 });
   }

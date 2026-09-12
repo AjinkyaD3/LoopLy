@@ -9,8 +9,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -51,22 +51,23 @@ enum WindowType {
 // -----------------------------------------------------------------------------
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String   @id @default(cuid())
+  email        String   @unique
   passwordHash String
   name         String
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Single business owned in V1
-  ownedBusiness        Business?
+  ownedBusiness Business?
   // Active sessions
-  sessions             Session[]
+  sessions      Session[]
 
   // Rewards redeemed by this business owner (audit trail)
-  redeemedRewards      Reward[]              @relation("RedeemedBy")
+  redeemedRewards        Reward[]          @relation("RedeemedBy")
+  redeemedCampaignPrizes CampaignPlay[]    @relation("CampaignPrizeRedeemedBy")
   // Legal acceptances (Terms, Privacy)
-  legalAcceptances     LegalAcceptance[]
+  legalAcceptances       LegalAcceptance[]
 }
 
 model Session {
@@ -111,10 +112,10 @@ model Customer {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  memberships          Membership[]
-  visitRequests        VisitRequest[]
-  visits               Visit[]
-  rewards              Reward[]
+  memberships   Membership[]
+  visitRequests VisitRequest[]
+  visits        Visit[]
+  rewards       Reward[]
 
   @@unique([businessId, mobileNumber])
   @@index([mobileNumber])
@@ -126,12 +127,12 @@ model Customer {
 // -----------------------------------------------------------------------------
 
 model Business {
-  id            String   @id @default(cuid())
+  id            String @id @default(cuid())
   name          String
   // Permanent unique public QR token used in /join/{businessToken}
-  businessToken String   @unique
-  ownerId       String   @unique
-  owner         User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  businessToken String @unique
+  ownerId       String @unique
+  owner         User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   googleReviewUrl String?
   instagramHandle String?
@@ -139,45 +140,57 @@ model Business {
   address         String?
   businessType    String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  loyaltyProgram       LoyaltyProgram?
-  campaigns            Campaign[]
-  memberships          Membership[]
-  customers            Customer[]
-  visitRequests        VisitRequest[]
-  visits               Visit[]
-  rewards              Reward[]
+  loyaltyProgramId String?          @unique
+  loyaltyProgram   LoyaltyProgram?  @relation("CurrentLoyaltyProgram", fields: [loyaltyProgramId], references: [id], onDelete: SetNull)
+  loyaltyPrograms  LoyaltyProgram[] @relation("BusinessPrograms")
+  campaigns        Campaign[]
+  memberships      Membership[]
+  customers        Customer[]
+  visitRequests    VisitRequest[]
+  visits           Visit[]
+  rewards          Reward[]
 
   @@index([ownerId])
   @@index([businessToken])
 }
 
 model LoyaltyProgram {
-  id                 String             @id @default(cuid())
-  businessId         String             @unique
-  business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  programName        String
-  requiredVisits     Int                @default(10)
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation("BusinessPrograms", fields: [businessId], references: [id], onDelete: Cascade)
+
+  currentFor           Business?          @relation("CurrentLoyaltyProgram")
+  programName          String
+  requiredVisits       Int                @default(10)
   // How the requiredVisits threshold is counted:
   //   LIFETIME     — all approved visits ever (existing behavior)
   //   ROLLING      — visits within the trailing windowDays, re-anchored after each reward
   //   FIXED_PERIOD — visits since windowStartsAt
-  windowType         WindowType         @default(LIFETIME)
-  windowDays         Int?               // required (Zod-enforced) when windowType == ROLLING
-  windowStartsAt     DateTime?          // required (Zod-enforced) when windowType == FIXED_PERIOD
-  rewardTitle        String
-  rewardDescription  String
-  rewardValidityDays Int                @default(30)
-  verificationMethod VerificationMethod @default(VISIT_CONFIRMATION)
-  isActive           Boolean            @default(true)
+  windowType           WindowType         @default(LIFETIME)
+  windowDays           Int? // required (Zod-enforced) when windowType == ROLLING
+  windowStartsAt       DateTime? // required (Zod-enforced) when windowType == FIXED_PERIOD
+  rewardTitle          String
+  rewardDescription    String
+  rewardValidityDays   Int                @default(30)
+  verificationMethod   VerificationMethod @default(VISIT_CONFIRMATION)
+  isActive             Boolean            @default(true)
   // Set true only for programs auto-paused when scratch-card mode was retired from
   // LoyaltyProgram in favor of the standalone Campaign subsystem — drives a one-time
   // dashboard banner for the affected owner, cleared once they dismiss it.
-  retiredScratchNotice Boolean          @default(false)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  retiredScratchNotice Boolean            @default(false)
+  startsAt             DateTime
+  endsAt               DateTime
+  endedManuallyAt      DateTime?
+
+  rewardDefinitions LoyaltyRewardDefinition[]
+  cards             LoyaltyCard[]
+  visitRequests     VisitRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   rewards           Reward[]
   scratchCardPrizes ScratchCardPrize[]
@@ -202,7 +215,7 @@ model ScratchCardPrize {
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
-  rewards          Reward[]
+  rewards Reward[]
 
   @@index([loyaltyProgramId])
 }
@@ -213,16 +226,16 @@ model ScratchCardPrize {
 // -----------------------------------------------------------------------------
 
 model Campaign {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   businessId      String
-  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business        Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name            String
-  campaignToken   String   @unique
+  campaignToken   String    @unique
   startsAt        DateTime
   endsAt          DateTime?
   endedManuallyAt DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   prizes CampaignPrize[]
   plays  CampaignPlay[]
@@ -256,7 +269,14 @@ model CampaignPlay {
   wonPrizeId    String?
   wonPrize      CampaignPrize? @relation(fields: [wonPrizeId], references: [id], onDelete: SetNull)
   revealedPrize String
-  playedAt      DateTime       @default(now())
+
+  claimCode        String?      @unique
+  status           RewardStatus @default(AVAILABLE)
+  redeemedAt       DateTime?
+  redeemedByUserId String?
+  redeemedByUser   User?        @relation("CampaignPrizeRedeemedBy", fields: [redeemedByUserId], references: [id], onDelete: SetNull)
+
+  playedAt DateTime @default(now())
 
   // The one-play-per-mobile-number-per-campaign gate, enforced at the DB level.
   @@unique([campaignId, mobileNumber])
@@ -268,24 +288,26 @@ model CampaignPlay {
 // -----------------------------------------------------------------------------
 
 model Membership {
-  id            String   @id @default(cuid())
-  customerId    String
-  customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  businessId    String
-  business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  businessId       String
+  business         Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   // currentVisits removed — a resettable running counter cannot represent a rolling or
   // fixed-period window. Progress is now always computed from Visit rows at read time
   // (see src/lib/loyaltyProgress.ts). totalVisits is safe to keep stored: it is a pure
   // lifetime tally with no window semantics, so it never needs to "reset" or go stale.
-  totalVisits   Int      @default(0) // Lifetime verified visits count
+  totalVisits      Int       @default(0) // Lifetime verified visits count
   reviewPromptedAt DateTime?
-  joinedAt      DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  joinedAt         DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  visitRequests        VisitRequest[]
-  visits               Visit[]
-  rewards              Reward[]
+  visitRequests VisitRequest[]
+  visits        Visit[]
+  rewards       Reward[]
+
+  loyaltyCards LoyaltyCard[]
 
   // A customer can belong to the same business only once
   @@unique([customerId, businessId])
@@ -298,32 +320,36 @@ model Membership {
 // -----------------------------------------------------------------------------
 
 model VisitRequest {
-  id              String             @id @default(cuid())
-  membershipId    String
-  membership      Membership         @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  businessId      String
-  business        Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customerId      String
-  customer        Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  enteredName     String?
-  method          VerificationMethod
-  billImagePath   String? // Supabase Storage object path (nullable for VISIT_CONFIRMATION)
-  billNumber      String? // customer-typed bill/receipt number, required (Zod) when method == BILL
-  billImageHash   String? // perceptual dHash (hex), required (Zod) when method == BILL
+  id                   String             @id @default(cuid())
+  membershipId         String
+  membership           Membership         @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  businessId           String
+  business             Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId           String
+  customer             Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  enteredName          String?
+  method               VerificationMethod
+  billImagePath        String? // Supabase Storage object path (nullable for VISIT_CONFIRMATION)
+  billNumber           String? // customer-typed bill/receipt number, required (Zod) when method == BILL
+  billImageHash        String? // perceptual dHash (hex), required (Zod) when method == BILL
   // Soft flag, not a hard reject — the owner is the final arbiter. Set when billNumber or
   // billImageHash matches another VisitRequest for the same business within the last 90
   // days, surfaced as a warning badge in BusinessRequestsPanel before approval.
-  duplicateSuspected  Boolean       @default(false)
+  duplicateSuspected   Boolean            @default(false)
   duplicateOfRequestId String?
-  duplicateOfRequest   VisitRequest? @relation("DuplicateOf", fields: [duplicateOfRequestId], references: [id], onDelete: SetNull)
-  duplicateFlaggedBy   VisitRequest[] @relation("DuplicateOf")
-  status          RequestStatus      @default(PENDING)
-  rejectionReason String?
-  reviewedAt      DateTime?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  duplicateOfRequest   VisitRequest?      @relation("DuplicateOf", fields: [duplicateOfRequestId], references: [id], onDelete: SetNull)
+  duplicateFlaggedBy   VisitRequest[]     @relation("DuplicateOf")
+  status               RequestStatus      @default(PENDING)
+  rejectionReason      String?
+  reviewedAt           DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 
   visit Visit?
+
+  loyaltyProgramId String?
+  loyaltyProgram   LoyaltyProgram?   @relation(fields: [loyaltyProgramId], references: [id], onDelete: SetNull)
+  loyaltyCardStamp LoyaltyCardStamp?
 
   @@index([businessId, status])
   @@index([membershipId])
@@ -338,18 +364,18 @@ model VisitRequest {
 // -----------------------------------------------------------------------------
 
 model Visit {
-  id                    String               @id @default(cuid())
+  id                    String        @id @default(cuid())
   membershipId          String
-  membership            Membership           @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  membership            Membership    @relation(fields: [membershipId], references: [id], onDelete: Cascade)
   businessId            String
-  business              Business             @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business              Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   customerId            String
-  customer              Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  verificationRequestId String?              @unique
-  verificationRequest   VisitRequest?        @relation(fields: [verificationRequestId], references: [id], onDelete: SetNull)
-  visitedAt             DateTime             @default(now())
+  customer              Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  verificationRequestId String?       @unique
+  verificationRequest   VisitRequest? @relation(fields: [verificationRequestId], references: [id], onDelete: SetNull)
+  visitedAt             DateTime      @default(now())
 
-  thresholdCompletionFor Reward[]            @relation("ThresholdCompletingVisit")
+  thresholdCompletionFor Reward[] @relation("ThresholdCompletingVisit")
 
   @@index([membershipId])
   @@index([businessId])
@@ -365,20 +391,20 @@ model Visit {
 // -----------------------------------------------------------------------------
 
 model Reward {
-  id               String         @id @default(cuid())
-  membershipId     String
-  membership       Membership     @relation(fields: [membershipId], references: [id], onDelete: Cascade)
-  businessId       String
-  business         Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customerId       String
-  customer         Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  loyaltyProgramId String
-  loyaltyProgram   LoyaltyProgram @relation(fields: [loyaltyProgramId], references: [id], onDelete: Restrict)
+  id                 String            @id @default(cuid())
+  membershipId       String
+  membership         Membership        @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  businessId         String
+  business           Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId         String
+  customer           Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  loyaltyProgramId   String
+  loyaltyProgram     LoyaltyProgram    @relation(fields: [loyaltyProgramId], references: [id], onDelete: Restrict)
   title              String
   description        String
   status             RewardStatus      @default(AVAILABLE)
   type               RewardType        @default(STANDARD)
-  claimCode          String?           // Used for VISITS program one-time code claim
+  claimCode          String? // Used for VISITS program one-time code claim
   scratchCardPrizeId String?
   scratchCardPrize   ScratchCardPrize? @relation(fields: [scratchCardPrizeId], references: [id], onDelete: SetNull)
   isScratched        Boolean           @default(false)
@@ -394,18 +420,72 @@ model Reward {
   // where no such link was ever tracked.
   thresholdVisitId   String?
   thresholdVisit     Visit?            @relation("ThresholdCompletingVisit", fields: [thresholdVisitId], references: [id], onDelete: SetNull)
-  expiresAt        DateTime
-  redeemedAt       DateTime?
-  redeemedByUserId String?
-  redeemedByUser   User?          @relation("RedeemedBy", fields: [redeemedByUserId], references: [id], onDelete: SetNull)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  expiresAt          DateTime
+  redeemedAt         DateTime?
+  redeemedByUserId   String?
+  redeemedByUser     User?             @relation("RedeemedBy", fields: [redeemedByUserId], references: [id], onDelete: SetNull)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
+  loyaltyCardId             String?
+  loyaltyCard               LoyaltyCard?             @relation(fields: [loyaltyCardId], references: [id], onDelete: SetNull)
+  loyaltyRewardDefinitionId String?
+  loyaltyRewardDefinition   LoyaltyRewardDefinition? @relation(fields: [loyaltyRewardDefinitionId], references: [id], onDelete: SetNull)
+
+  // NULL-safe: Postgres allows multiple NULLs, so this only constrains actual
+  // threshold-triggered rewards, never colliding with non-threshold reward rows.
+  @@unique([membershipId, loyaltyProgramId, thresholdCycle])
   @@index([membershipId])
   @@index([businessId])
   @@index([customerId])
   @@index([status])
-  // NULL-safe: Postgres allows multiple NULLs, so this only constrains actual
-  // threshold-triggered rewards, never colliding with non-threshold reward rows.
-  @@unique([membershipId, loyaltyProgramId, thresholdCycle])
+}
+
+// -----------------------------------------------------------------------------
+// LOYALTY CARDS (NEW)
+// -----------------------------------------------------------------------------
+
+model LoyaltyRewardDefinition {
+  id               String         @id @default(cuid())
+  loyaltyProgramId String
+  loyaltyProgram   LoyaltyProgram @relation(fields: [loyaltyProgramId], references: [id], onDelete: Cascade)
+  cardPosition     Int
+  title            String
+  description      String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  rewards Reward[]
+
+  @@unique([loyaltyProgramId, cardPosition])
+  @@index([loyaltyProgramId])
+}
+
+model LoyaltyCard {
+  id               String         @id @default(cuid())
+  membershipId     String
+  membership       Membership     @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  loyaltyProgramId String
+  loyaltyProgram   LoyaltyProgram @relation(fields: [loyaltyProgramId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  stamps  LoyaltyCardStamp[]
+  rewards Reward[]
+
+  @@unique([membershipId, loyaltyProgramId])
+  @@index([loyaltyProgramId])
+}
+
+model LoyaltyCardStamp {
+  id             String       @id @default(cuid())
+  loyaltyCardId  String
+  loyaltyCard    LoyaltyCard  @relation(fields: [loyaltyCardId], references: [id], onDelete: Cascade)
+  visitRequestId String       @unique
+  visitRequest   VisitRequest @relation(fields: [visitRequestId], references: [id], onDelete: Cascade)
+  cardPosition   Int
+  awardedAt      DateTime     @default(now())
+
+  @@unique([loyaltyCardId, cardPosition])
+  @@index([loyaltyCardId])
 }
