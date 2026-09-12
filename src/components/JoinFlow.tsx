@@ -2,9 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Award, CheckCircle2, Loader2, Smartphone } from "lucide-react";
+import GoogleReviewModal from "./GoogleReviewModal";
+import InstagramButton from "./InstagramButton";
 
 interface JoinFlowProps {
-  business: { id: string; name: string };
+  business: {
+    id: string;
+    name: string;
+    googleReviewUrl: string | null;
+    instagramHandle: string | null;
+  };
   program: {
     programName: string;
     rewardTitle: string;
@@ -25,6 +32,8 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
   const [progress, setProgress] = useState<{
     exists: boolean;
     name?: string;
+    membershipId?: string;
+    reviewPromptedAt?: string | null;
     currentVisits: number;
     totalVisits: number;
     eligibleForReward: boolean;
@@ -161,7 +170,18 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
             ) : (
               <span>New here? Submitting will create your loyalty profile.</span>
             )}
+            {business.instagramHandle && <InstagramButton handle={business.instagramHandle} />}
           </div>
+        )}
+
+        {progress?.exists && progress.membershipId && business.googleReviewUrl && (
+          <GoogleReviewModal
+            membershipId={progress.membershipId}
+            businessName={business.name}
+            googleReviewUrl={business.googleReviewUrl}
+            currentVisits={progress.currentVisits}
+            reviewPromptedAt={progress.reviewPromptedAt ? new Date(progress.reviewPromptedAt) : null}
+          />
         )}
 
         {progress?.eligibleForReward ? (
