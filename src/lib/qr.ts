@@ -14,6 +14,19 @@ export function getBusinessJoinUrl(businessToken: string): string {
 }
 
 /**
+ * Returns the public play URL for a campaign token. Separate from the permanent business join
+ * URL — campaign QRs are disposable and distributed independently of the standee QR.
+ */
+export function getCampaignPlayUrl(campaignToken: string): string {
+  const rawUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
+  if (!rawUrl || typeof rawUrl !== "string" || rawUrl.trim() === "") {
+    throw new Error("NEXT_PUBLIC_APP_URL is missing or invalid in environment configuration.");
+  }
+  const appUrl = rawUrl.trim().replace(/\/$/, "");
+  return `${appUrl}/campaign/${campaignToken}`;
+}
+
+/**
  * Generates an SVG string for a given text/URL.
  * Native vector format: immune to base64 length limits, crisp at all resolutions.
  */

@@ -1,0 +1,137 @@
+[
+  {
+    "id": "cmtv8zkv30004662ji8caw80l",
+    "businessId": "cmtv8zkv20003662j2dnxdz4k",
+    "programName": "Coffee Club",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtv8zlni0007662j2ouc2c9v",
+    "businessId": "cmtv8zlni0006662jilnp8o9l",
+    "programName": "Pastry Pass",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtv903aq0006slxwvbvlwlys",
+    "businessId": "cmtv903aq0005slxw4vne1bf3",
+    "programName": "Coffee Rewards",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtv903wl0009slxwi1dfhtg0",
+    "businessId": "cmtv903wl0008slxw646agpfg",
+    "programName": "Bakery Club",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvbqqfv0004rph59z7zq04t",
+    "businessId": "cmtvbqqfv0003rph5r7tj9jjn",
+    "programName": "Coffee Club",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvbqsts0007rph57mpygmh3",
+    "businessId": "cmtvbqsts0006rph5574v5pn3",
+    "programName": "Pastry Pass",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvbqstt0006nqfid40194j3",
+    "businessId": "cmtvbqstt0005nqfiam7hmbe0",
+    "programName": "Coffee Rewards",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvbqvq20009nqfiiy278le7",
+    "businessId": "cmtvbqvq20008nqfiez2cb6u8",
+    "programName": "Bakery Club",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvd5njn0003jlkf00c4ugtz",
+    "businessId": "cmtvd49xu0001jlkfegniq9ql",
+    "programName": "free website",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvqsu9c0001wd0lnvlvlmbb",
+    "businessId": "cmtv98l6g0005px2d9i2c951d",
+    "programName": "test 123",
+    "type": "SCRATCH_CARD",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvqybpt000iwd0lf3uw7q0j",
+    "businessId": "cmtvqxeo6000gwd0l64o8c7r4",
+    "programName": "free website",
+    "type": "SCRATCH_CARD",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtvs463j0007ow7l4gd9hd1z",
+    "businessId": "cmtvs2i190005ow7lt6hu0unl",
+    "programName": "Stratch and win",
+    "type": "SCRATCH_CARD",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtwyor1v0007hmqwx0hbtvhj",
+    "businessId": "cmtwycx900005hmqwo1yumh6x",
+    "programName": "TEMP1",
+    "type": "SCRATCH_CARD",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtwzob1m00043ybannorrq7i",
+    "businessId": "cmtwzob1m00033ybalq5rcowf",
+    "programName": "Coffee Club",
+    "type": "VISITS",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  },
+  {
+    "id": "cmtwzodjo00073ybauddjg9gr",
+    "businessId": "cmtwzodjo00063yban2j71vyz",
+    "programName": "Lucky Spin",
+    "type": "SCRATCH_CARD",
+    "rewardType": "STANDARD",
+    "isActive": true,
+    "retiredScratchNotice": false
+  }
+]

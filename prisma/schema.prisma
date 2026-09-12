@@ -126,7 +126,7 @@ model Business {
   businessToken String   @unique
   ownerId       String   @unique
   owner         User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  
+
   googleReviewUrl String?
   instagramHandle String?
   youtubeHandle   String?
@@ -137,6 +137,7 @@ model Business {
   updatedAt     DateTime @updatedAt
 
   loyaltyProgram       LoyaltyProgram?
+  campaigns            Campaign[]
   memberships          Membership[]
   customers            Customer[]
   visitRequests        VisitRequest[]
@@ -152,14 +153,16 @@ model LoyaltyProgram {
   businessId         String             @unique
   business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
   programName        String
-  visitsEnabled      Boolean            @default(true)
-  scratchCardEnabled Boolean            @default(false)
   requiredVisits     Int                @default(10)
   rewardTitle        String
   rewardDescription  String
   rewardValidityDays Int                @default(30)
   verificationMethod VerificationMethod @default(VISIT_CONFIRMATION)
   isActive           Boolean            @default(true)
+  // Set true only for programs auto-paused when scratch-card mode was retired from
+  // LoyaltyProgram in favor of the standalone Campaign subsystem — drives a one-time
+  // dashboard banner for the affected owner, cleared once they dismiss it.
+  retiredScratchNotice Boolean          @default(false)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -170,8 +173,11 @@ model LoyaltyProgram {
 }
 
 // -----------------------------------------------------------------------------
-// SCRATCH CARD PRIZE (For SCRATCH_CARD programs)
+// SCRATCH CARD PRIZE (LEGACY — frozen historical data only)
 // -----------------------------------------------------------------------------
+// Retained solely to preserve referential integrity for pre-existing LoyaltyProgram
+// (type = SCRATCH_CARD) rows and their historical Reward rows. No new code path creates
+// rows here — scratch-style plays now live entirely under the Campaign subsystem below.
 
 model ScratchCardPrize {
   id               String         @id @default(cuid())
@@ -186,6 +192,62 @@ model ScratchCardPrize {
   rewards          Reward[]
 
   @@index([loyaltyProgramId])
+}
+
+// -----------------------------------------------------------------------------
+// CAMPAIGN (Standalone promotional scratch-card campaigns — independent of the
+// loyalty program; not tied to a visit, purchase, or approval)
+// -----------------------------------------------------------------------------
+
+model Campaign {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name            String
+  campaignToken   String   @unique
+  startsAt        DateTime
+  endsAt          DateTime?
+  endedManuallyAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  prizes CampaignPrize[]
+  plays  CampaignPlay[]
+
+  @@index([businessId])
+  @@index([campaignToken])
+}
+
+model CampaignPrize {
+  id             String   @id @default(cuid())
+  campaignId     String
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  title          String
+  weight         Int
+  totalStock     Int
+  remainingStock Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  plays CampaignPlay[]
+
+  @@index([campaignId])
+}
+
+model CampaignPlay {
+  id            String         @id @default(cuid())
+  campaignId    String
+  campaign      Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  mobileNumber  String
+  customerName  String?
+  wonPrizeId    String?
+  wonPrize      CampaignPrize? @relation(fields: [wonPrizeId], references: [id], onDelete: SetNull)
+  revealedPrize String
+  playedAt      DateTime       @default(now())
+
+  // The one-play-per-mobile-number-per-campaign gate, enforced at the DB level.
+  @@unique([campaignId, mobileNumber])
+  @@index([campaignId])
 }
 
 // -----------------------------------------------------------------------------

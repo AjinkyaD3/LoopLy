@@ -7,13 +7,14 @@ import { randomBytes } from "crypto";
 const TOKEN_CHARSET = "23456789abcdefghjkmnpqrstuvwxyz";
 
 /**
- * Generates a cryptographically secure, non-sequential random token for a business QR join URL.
+ * Generates a cryptographically secure, non-sequential random token.
+ * Used for both permanent business join tokens and disposable campaign tokens.
  * Length defaults to 12 characters (>60 bits of entropy), preventing ID enumeration.
  * Example result: 'k8f2m9q1px4z'
  */
-export function generateBusinessToken(length: number = 12): string {
+export function generateToken(length: number = 12): string {
   if (length < 8) {
-    throw new Error("Business token length must be at least 8 characters");
+    throw new Error("Token length must be at least 8 characters");
   }
 
   const bytes = randomBytes(length);
@@ -30,9 +31,9 @@ export function generateBusinessToken(length: number = 12): string {
 }
 
 /**
- * Validates whether a given string matches the business token format.
+ * Validates whether a given string matches the token format (business or campaign tokens).
  */
-export function isValidBusinessToken(token: string): boolean {
+export function isValidToken(token: string): boolean {
   if (typeof token !== "string" || token.length < 8 || token.length > 32) {
     return false;
   }

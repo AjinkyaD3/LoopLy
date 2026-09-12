@@ -38,7 +38,6 @@ export default async function BusinessSettingsPage() {
               rewardDescription: business.loyaltyProgram.rewardDescription,
               rewardValidityDays: business.loyaltyProgram.rewardValidityDays,
               verificationMethod: business.loyaltyProgram.verificationMethod,
-              rewardType: business.loyaltyProgram.rewardType,
               isActive: business.loyaltyProgram.isActive,
             }
           : null,

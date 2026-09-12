@@ -22,7 +22,6 @@ interface BusinessSettingsProps {
       rewardDescription: string;
       rewardValidityDays: number;
       verificationMethod: string;
-      rewardType: string;
       isActive: boolean;
     } | null;
   };

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
-import { isValidBusinessToken } from "@/lib/token";
+import { isValidToken } from "@/lib/token";
 import { Sparkles, AlertCircle } from "lucide-react";
 import JoinFlow from "@/components/JoinFlow";
 
@@ -15,7 +15,7 @@ interface JoinPageProps {
 export default async function PublicJoinPage({ params }: JoinPageProps) {
   const { businessToken } = params;
 
-  if (!businessToken || !isValidBusinessToken(businessToken)) {
+  if (!businessToken || !isValidToken(businessToken)) {
     return <NotFoundState />;
   }
 

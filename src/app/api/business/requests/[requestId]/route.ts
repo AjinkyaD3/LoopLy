@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireBusinessOwner } from "@/lib/auth";
 import { VerificationReviewSchema } from "@/lib/validations";
-import crypto from "crypto";
 
 function generateClaimCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -121,19 +120,13 @@ export async function PATCH(
         },
       });
 
-      const { requiredVisits, rewardTitle, rewardDescription, rewardValidityDays, rewardType, type: programType, id: loyaltyProgramId } =
+      const { requiredVisits, rewardTitle, rewardDescription, rewardValidityDays, id: loyaltyProgramId } =
         business.loyaltyProgram!;
 
       let reward = null;
 
       // 4. Check threshold and create reward if earned
       if (updatedMembership.currentVisits >= requiredVisits) {
-        
-        // Only VISITS programs have this VisitRequest approval flow
-        if (programType !== "VISITS") {
-           throw new Error("INVALID_PROGRAM_TYPE");
-        }
-
         const claimCode = generateClaimCode();
 
         reward = await tx.reward.create({
@@ -145,7 +138,7 @@ export async function PATCH(
             title: rewardTitle,
             description: rewardDescription,
             status: "AVAILABLE",
-            type: rewardType,
+            type: "STANDARD",
             claimCode,
             expiresAt: new Date(now.getTime() + rewardValidityDays * 24 * 60 * 60 * 1000),
           },

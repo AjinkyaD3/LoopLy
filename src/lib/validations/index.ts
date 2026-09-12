@@ -14,17 +14,11 @@ export type RequestStatus = z.infer<typeof RequestStatusSchema>;
 export const RewardStatusSchema = z.enum(["AVAILABLE", "REDEEMED", "EXPIRED"]);
 export type RewardStatus = z.infer<typeof RewardStatusSchema>;
 
+// Retained only for the historical Reward.type field (legacy SCRATCH_CARD reward rows).
+// No new code path sets rewardType — scratch-style plays now live under the Campaign
+// subsystem's own CampaignPlay/CampaignPrize models.
 export const RewardTypeSchema = z.enum(["STANDARD", "SCRATCH_CARD"]);
 export type RewardType = z.infer<typeof RewardTypeSchema>;
-
-export const ProgramTypeSchema = z.enum(["VISITS", "SCRATCH_CARD"]);
-export type ProgramType = z.infer<typeof ProgramTypeSchema>;
-
-export const ScratchCardPrizeSchema = z.object({
-  title: z.string().min(2, "Prize title must be at least 2 characters").max(100).trim(),
-  description: z.string().max(500).trim().optional().or(z.literal("")),
-  weight: z.number().int().positive("Weight must be a positive number"),
-});
 
 // =============================================================================
 // VALIDATION SCHEMAS
@@ -98,22 +92,35 @@ export const BusinessUpdateSchema = z.object({
 });
 
 export const LoyaltyProgramSchema = z.object({
-  type: ProgramTypeSchema.default("VISITS"),
   programName: z.string().min(2, "Program name must be at least 2 characters").max(100, "Program name must be at most 100 characters").trim(),
   requiredVisits: z.number().int().min(1, "Required visits must be at least 1").max(100, "Required visits must be at most 100").default(10),
   rewardTitle: z.string().min(2, "Reward title must be at least 2 characters").max(100, "Reward title must be at most 100 characters").trim(),
   rewardDescription: z.string().max(500, "Reward description must be at most 500 characters").trim().default(""),
   rewardValidityDays: z.number().int().min(1, "Validity must be at least 1 day").max(365, "Validity must be at most 365 days").default(30),
   verificationMethod: VerificationMethodSchema.default("VISIT_CONFIRMATION"),
-  rewardType: RewardTypeSchema.default("STANDARD"),
   isActive: z.boolean().default(true),
-  prizes: z.array(ScratchCardPrizeSchema).optional(),
+});
+
+export const CampaignPrizeCreateSchema = z.object({
+  title: z.string().min(2, "Prize title must be at least 2 characters").max(100).trim(),
+  weight: z.number().int().positive("Weight must be a positive number"),
+  totalStock: z.number().int().positive("Total stock must be a positive number"),
+});
+
+export const CampaignCreateSchema = z.object({
+  name: z.string().min(2, "Campaign name must be at least 2 characters").max(100).trim(),
+  startsAt: z.coerce.date(),
+  endsAt: z.coerce.date().nullable().optional(),
+  prizes: z.array(CampaignPrizeCreateSchema).min(1, "At least one prize is required"),
 }).superRefine((data, ctx) => {
-  if (data.type === "SCRATCH_CARD") {
-    if (!data.prizes || data.prizes.length < 3 || data.prizes.length > 10) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Between 3 and 10 prizes are required for a Scratch Card program", path: ["prizes"] });
-    }
+  if (data.endsAt && data.endsAt <= data.startsAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "End date must be after the start date", path: ["endsAt"] });
   }
+});
+
+export const CampaignPlaySchema = z.object({
+  mobileNumber: z.string().min(5, "Mobile number is required"),
+  customerName: z.string().max(100).trim().optional(),
 });
 
 export const VerificationRequestCreateSchema = z.object({

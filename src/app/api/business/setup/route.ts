@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 
 import { BusinessSetupSchema } from "@/lib/validations";
-import { generateBusinessToken } from "@/lib/token";
+import { generateToken } from "@/lib/token";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     } = parsed.data;
 
     // 4. Generate permanent unique businessToken
-    const businessToken = generateBusinessToken(12);
+    const businessToken = generateToken(12);
 
     // 5. Create Business (no loyalty program yet)
     const business = await prisma.business.create({

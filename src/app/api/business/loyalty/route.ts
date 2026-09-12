@@ -20,37 +20,25 @@ export async function POST(request: NextRequest) {
     }
 
     const {
-      type,
       programName,
       requiredVisits,
       rewardTitle,
       rewardDescription,
       rewardValidityDays,
       verificationMethod,
-      rewardType,
       isActive,
-      prizes,
     } = parsed.data;
 
     const loyaltyProgram = await prisma.loyaltyProgram.create({
       data: {
         businessId: business.id,
-        type,
         programName,
         requiredVisits,
         rewardTitle,
         rewardDescription,
         rewardValidityDays,
         verificationMethod,
-        rewardType,
         isActive,
-        scratchCardPrizes: type === "SCRATCH_CARD" && prizes ? {
-          create: prizes.map((p: any) => ({
-            title: p.title,
-            description: p.description || null,
-            weight: p.weight
-          }))
-        } : undefined
       },
     });
 
@@ -79,40 +67,25 @@ export async function PUT(request: NextRequest) {
     }
 
     const {
-      type,
       programName,
       requiredVisits,
       rewardTitle,
       rewardDescription,
       rewardValidityDays,
       verificationMethod,
-      rewardType,
       isActive,
-      prizes,
     } = parsed.data;
 
     const updated = await prisma.loyaltyProgram.update({
       where: { id: business.loyaltyProgram.id },
       data: {
-        type,
         programName,
         requiredVisits,
         rewardTitle,
         rewardDescription,
         rewardValidityDays,
         verificationMethod,
-        rewardType,
         isActive,
-        scratchCardPrizes: type === "SCRATCH_CARD" && prizes ? {
-          deleteMany: {},
-          create: prizes.map((p: any) => ({
-            title: p.title,
-            description: p.description || null,
-            weight: p.weight
-          }))
-        } : {
-          deleteMany: {}
-        }
       },
     });
 
