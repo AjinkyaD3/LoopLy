@@ -1,8 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-
-import { BusinessUpdateSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -56,68 +54,7 @@ export async function GET() {
   }
 }
 
-/**
- * PUT /api/business
- * Updates the business profile (name).
- * Immutable fields: id, ownerId, businessToken are never updated.
- */
-export async function PUT(request: NextRequest) {
-  try {
-    const user = await getCurrentUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-
-    const existingBusiness = await prisma.business.findUnique({
-      where: { ownerId: user.id },
-    });
-
-    if (!existingBusiness) {
-      return NextResponse.json(
-        { error: "No business found for this owner." },
-        { status: 404 }
-      );
-    }
-
-    const body = await request.json();
-    const parsed = BusinessUpdateSchema.safeParse(body);
-    if (!parsed.success) {
-      const firstError = parsed.error.issues[0]?.message || "Invalid input";
-      return NextResponse.json({ error: firstError }, { status: 400 });
-    }
-
-    const { name } = parsed.data;
-
-    const updated = await prisma.business.update({
-      where: { id: existingBusiness.id },
-      data: { name },
-      include: { loyaltyProgram: true },
-    });
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
-    const joinUrl = `${appUrl}/join/${updated.businessToken}`;
-
-    return NextResponse.json(
-      {
-        success: true,
-        business: {
-          id: updated.id,
-          name: updated.name,
-          businessToken: updated.businessToken,
-          joinUrl,
-          createdAt: updated.createdAt,
-          updatedAt: updated.updatedAt,
-          loyaltyProgram: updated.loyaltyProgram,
-        },
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Update business error:", error);
-    return NextResponse.json(
-      { error: "Failed to update business profile." },
-      { status: 500 }
-    );
-  }
-}
+// PUT (business rename) was removed here — it was already dead code (no live UI called it;
+// BusinessUpdateSchema requires only `name`, but even the original BusinessDashboardTabs.tsx
+// never wired handleUpdateBusiness to a rendered <form>). PUT /api/business/account is the
+// one live business-update route and now correctly persists all six fields.

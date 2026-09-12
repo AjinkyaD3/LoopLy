@@ -11,12 +11,19 @@ export async function PUT(req: Request) {
 
     const data = BusinessUpdateSchema.parse(body);
 
+    // Partial-update semantics: a field omitted from the request (undefined) leaves the
+    // existing value unchanged; a field explicitly sent (including "") is written. This is
+    // what lets the dashboard's quick-rename form send only {name} without wiping the other
+    // five fields — Prisma skips any key whose value is undefined in an update.
     const updatedBusiness = await prisma.business.update({
       where: { id: business.id },
       data: {
         name: data.name,
-        googleReviewUrl: data.googleReviewUrl || null,
-        instagramHandle: data.instagramHandle || null,
+        address: data.address !== undefined ? (data.address || null) : undefined,
+        businessType: data.businessType !== undefined ? (data.businessType || null) : undefined,
+        googleReviewUrl: data.googleReviewUrl !== undefined ? (data.googleReviewUrl || null) : undefined,
+        instagramHandle: data.instagramHandle !== undefined ? (data.instagramHandle || null) : undefined,
+        youtubeHandle: data.youtubeHandle !== undefined ? (data.youtubeHandle || null) : undefined,
       },
     });
 
@@ -25,6 +32,11 @@ export async function PUT(req: Request) {
       business: {
         id: updatedBusiness.id,
         name: updatedBusiness.name,
+        address: updatedBusiness.address,
+        businessType: updatedBusiness.businessType,
+        googleReviewUrl: updatedBusiness.googleReviewUrl,
+        instagramHandle: updatedBusiness.instagramHandle,
+        youtubeHandle: updatedBusiness.youtubeHandle,
       },
     });
   } catch (error: any) {
