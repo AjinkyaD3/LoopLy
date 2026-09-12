@@ -11,6 +11,7 @@ import {
   Receipt,
   FileCheck,
   Award,
+  AlertTriangle,
 } from "lucide-react";
 
 interface VRCustomer {
@@ -30,7 +31,9 @@ interface VisitRequest {
   method: "VISIT_CONFIRMATION" | "BILL";
   status: "PENDING" | "APPROVED" | "REJECTED";
   billImagePath: string | null;
+  billNumber: string | null;
   signedBillUrl?: string | null;
+  duplicateSuspected: boolean;
   rejectionReason: string | null;
   enteredName: string | null;
   createdAt: string;
@@ -198,10 +201,20 @@ export default function BusinessRequestsPanel({
                 </span>
               </div>
 
+              {/* Duplicate-bill warning — a flag for owner review, never an auto-reject */}
+              {r.duplicateSuspected && (
+                <div className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200 flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                  <span>This bill number or photo closely matches another request from the last 90 days. Review before approving.</span>
+                </div>
+              )}
+
               {/* Bill image preview link */}
               {r.billImagePath && (
                 <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between gap-2">
-                  <span className="truncate">📎 Bill receipt: <span className="font-mono text-slate-500">{r.billImagePath}</span></span>
+                  <span className="truncate">
+                    📎 Bill{r.billNumber ? ` #${r.billNumber}` : ""}: <span className="font-mono text-slate-500">{r.billImagePath}</span>
+                  </span>
                   {r.signedBillUrl && (
                     <a
                       href={r.signedBillUrl}

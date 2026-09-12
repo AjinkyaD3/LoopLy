@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Award, CheckCircle2, Loader2, Smartphone } from "lucide-react";
 import GoogleReviewModal from "./GoogleReviewModal";
 import InstagramButton from "./InstagramButton";
+import BillPhotoInput from "./VisitRequestButton";
 
 interface JoinFlowProps {
   business: {
@@ -23,7 +24,9 @@ interface JoinFlowProps {
 export default function JoinFlow({ business, program }: JoinFlowProps) {
   const [mobileNumber, setMobileNumber] = useState("");
   const [enteredName, setEnteredName] = useState("");
-  const [billPhotoUrl, setBillPhotoUrl] = useState("");
+  const [billFile, setBillFile] = useState<File | null>(null);
+  const [billFileError, setBillFileError] = useState<string | null>(null);
+  const [billNumber, setBillNumber] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -74,23 +77,28 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
 
   const handleSubmitVisit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (program.verificationMethod === "BILL" && !billPhotoUrl) {
+    if (program.verificationMethod === "BILL" && !billFile) {
       setError("Bill photo is required for this program.");
+      return;
+    }
+    if (program.verificationMethod === "BILL" && !billNumber.trim()) {
+      setError("Bill number is required for this program.");
       return;
     }
 
     setLoading(true);
     setError("");
     try {
+      const formData = new FormData();
+      formData.append("mobileNumber", mobileNumber);
+      formData.append("enteredName", enteredName);
+      formData.append("businessId", business.id);
+      if (billFile) formData.append("billPhoto", billFile);
+      if (billNumber) formData.append("billNumber", billNumber.trim());
+
       const res = await fetch("/api/customer/visit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mobileNumber,
-          enteredName,
-          billPhotoUrl,
-          businessId: business.id,
-        }),
+        body: formData,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit visit");
@@ -229,17 +237,28 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
 
             {program.verificationMethod === "BILL" && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Bill Photo URL (For Demo)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Bill Number</label>
                 <input
                   type="text"
                   required
-                  value={billPhotoUrl}
-                  onChange={(e) => setBillPhotoUrl(e.target.value)}
-                  placeholder="https://example.com/bill.jpg"
+                  value={billNumber}
+                  onChange={(e) => setBillNumber(e.target.value)}
+                  placeholder="e.g. the receipt/invoice number"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none"
                 />
               </div>
             )}
+
+            {program.verificationMethod === "BILL" && (
+              <BillPhotoInput
+                file={billFile}
+                onFileSelect={(file, fileError) => {
+                  setBillFile(file);
+                  setBillFileError(fileError);
+                }}
+              />
+            )}
+            {billFileError && <p className="text-rose-600 text-xs font-semibold">{billFileError}</p>}
 
             {error && <p className="text-rose-600 text-xs font-semibold">{error}</p>}
             {success && <p className="text-emerald-600 text-xs font-semibold">{success}</p>}
@@ -247,7 +266,7 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
             {!success && (
               <button
                 type="submit"
-                disabled={loading || mobileNumber.length < 5}
+                disabled={loading || mobileNumber.length < 5 || !!billFileError}
                 className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Visit"}

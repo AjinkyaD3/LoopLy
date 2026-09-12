@@ -308,6 +308,15 @@ model VisitRequest {
   enteredName     String?
   method          VerificationMethod
   billImagePath   String? // Supabase Storage object path (nullable for VISIT_CONFIRMATION)
+  billNumber      String? // customer-typed bill/receipt number, required (Zod) when method == BILL
+  billImageHash   String? // perceptual dHash (hex), required (Zod) when method == BILL
+  // Soft flag, not a hard reject — the owner is the final arbiter. Set when billNumber or
+  // billImageHash matches another VisitRequest for the same business within the last 90
+  // days, surfaced as a warning badge in BusinessRequestsPanel before approval.
+  duplicateSuspected  Boolean       @default(false)
+  duplicateOfRequestId String?
+  duplicateOfRequest   VisitRequest? @relation("DuplicateOf", fields: [duplicateOfRequestId], references: [id], onDelete: SetNull)
+  duplicateFlaggedBy   VisitRequest[] @relation("DuplicateOf")
   status          RequestStatus      @default(PENDING)
   rejectionReason String?
   reviewedAt      DateTime?
@@ -320,6 +329,8 @@ model VisitRequest {
   @@index([membershipId])
   @@index([customerId])
   @@index([status])
+  @@index([businessId, billNumber])
+  @@index([businessId, billImageHash])
 }
 
 // -----------------------------------------------------------------------------
