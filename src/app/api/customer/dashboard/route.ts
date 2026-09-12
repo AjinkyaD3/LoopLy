@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
     const mobileNumber = request.nextUrl.searchParams.get("mobileNumber");
-    
+
     if (!mobileNumber || mobileNumber.trim().length < 5) {
       return NextResponse.json({ error: "Invalid mobile number" }, { status: 400 });
     }
@@ -35,69 +36,41 @@ export async function GET(request: NextRequest) {
     }
 
     // Map into a unified response
-    const memberships = customers.map(customer => {
+    const memberships = await Promise.all(customers.map(async customer => {
       const business = customer.business;
       const loyaltyProgram = business.loyaltyProgram;
-      
-      // If a business doesn't have an active program, we could potentially skip it, 
+
+      // If a business doesn't have an active program, we could potentially skip it,
       // but returning it as history is fine. We'll only return if there's a program.
       if (!loyaltyProgram) return null;
 
       const membership = customer.memberships.find(m => m.businessId === business.id);
-      
-      const baseData = {
+      if (!membership) return null;
+
+      const eligibility = await computeThresholdEligibility(prisma, membership.id, loyaltyProgram);
+      const requiredVisits = loyaltyProgram.requiredVisits;
+
+      // Also check if there's an already-minted reward waiting to be claimed.
+      const pendingReward = customer.rewards.find(r =>
+        r.businessId === business.id &&
+        r.loyaltyProgramId === loyaltyProgram.id &&
+        r.status === "AVAILABLE" &&
+        r.type === "STANDARD"
+      );
+
+      return {
         businessName: business.name,
         programName: loyaltyProgram.programName,
-        programType: loyaltyProgram.type,
+        progress: {
+          currentVisits: eligibility.qualifyingVisits,
+          requiredVisits,
+          rewardAvailable: eligibility.qualifies || !!pendingReward,
+          rewardTitle: loyaltyProgram.rewardTitle
+        }
       };
+    }));
 
-      if (loyaltyProgram.type === "VISITS") {
-        const currentVisits = membership?.currentVisits || 0;
-        const requiredVisits = loyaltyProgram.requiredVisits;
-        const rewardAvailable = currentVisits >= requiredVisits;
-        
-        // Also check if there's an already-minted reward waiting to be claimed
-        // For VISITS, a reward is minted when currentVisits >= requiredVisits.
-        // It has claimCode attached.
-        const pendingReward = customer.rewards.find(r => 
-          r.businessId === business.id && 
-          r.loyaltyProgramId === loyaltyProgram.id &&
-          r.status === "AVAILABLE" && 
-          r.type === "STANDARD"
-        );
-
-        return {
-          ...baseData,
-          progress: {
-            currentVisits,
-            requiredVisits,
-            rewardAvailable: rewardAvailable || !!pendingReward,
-            rewardTitle: loyaltyProgram.rewardTitle
-          }
-        };
-      } else {
-        // SCRATCH_CARD
-        // Get all past won prizes where a prize was actually revealed
-        const wins = customer.rewards
-          .filter(r => 
-            r.businessId === business.id && 
-            r.loyaltyProgramId === loyaltyProgram.id &&
-            r.type === "SCRATCH_CARD" &&
-            r.revealedPrize
-          )
-          .map(r => ({
-            title: r.revealedPrize,
-            date: r.createdAt.toISOString()
-          }));
-
-        return {
-          ...baseData,
-          wins
-        };
-      }
-    }).filter(Boolean);
-
-    return NextResponse.json({ success: true, memberships }, { status: 200 });
+    return NextResponse.json({ success: true, memberships: memberships.filter(Boolean) }, { status: 200 });
 
   } catch (error: any) {
     console.error("Dashboard lookup error:", error);

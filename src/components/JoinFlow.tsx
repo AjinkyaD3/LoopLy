@@ -1,52 +1,54 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Award, CheckCircle2, Loader2, Smartphone, Sparkles } from "lucide-react";
-import ScratchCardComponent from "./ScratchCardComponent";
-import RewardCard from "./RewardCard";
+import { Award, CheckCircle2, Loader2, Smartphone } from "lucide-react";
+import GoogleReviewModal from "./GoogleReviewModal";
+import InstagramButton from "./InstagramButton";
+import BillPhotoInput from "./VisitRequestButton";
 
 interface JoinFlowProps {
-  business: { id: string; name: string };
+  business: {
+    id: string;
+    name: string;
+    googleReviewUrl: string | null;
+    instagramHandle: string | null;
+  };
   program: {
     programName: string;
-    type: string;
     rewardTitle: string;
     requiredVisits: number;
     verificationMethod: string;
-    rewardType: string;
   };
 }
 
 export default function JoinFlow({ business, program }: JoinFlowProps) {
   const [mobileNumber, setMobileNumber] = useState("");
   const [enteredName, setEnteredName] = useState("");
-  const [billPhotoUrl, setBillPhotoUrl] = useState(""); 
-  
+  const [billFile, setBillFile] = useState<File | null>(null);
+  const [billFileError, setBillFileError] = useState<string | null>(null);
+  const [billNumber, setBillNumber] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
-  // Progress State (for VISITS programs)
+
   const [progress, setProgress] = useState<{
     exists: boolean;
     name?: string;
+    membershipId?: string;
+    reviewPromptedAt?: string | null;
     currentVisits: number;
     totalVisits: number;
     eligibleForReward: boolean;
   } | null>(null);
   const [checkingProgress, setCheckingProgress] = useState(false);
 
-  // Claim Code State
   const [claimCode, setClaimCode] = useState("");
   const [claimedReward, setClaimedReward] = useState<any>(null);
-  const [scratchComplete, setScratchComplete] = useState(false);
 
-  // Debounced progress check
   const debounceTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (program.type !== "VISITS") return; // No progress check for Scratch Card
-
     if (mobileNumber.length >= 5) {
       setCheckingProgress(true);
       clearTimeout(debounceTimer.current);
@@ -70,31 +72,37 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
       setProgress(null);
     }
     return () => clearTimeout(debounceTimer.current);
-  }, [mobileNumber, business.id, program.type, enteredName]); // added enteredName just to silence eslint, though it could cause loop if not careful. Wait, I'll remove enteredName from deps and add eslint-disable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mobileNumber, business.id]);
 
   const handleSubmitVisit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (program.verificationMethod === "BILL" && !billPhotoUrl) {
+    if (program.verificationMethod === "BILL" && !billFile) {
       setError("Bill photo is required for this program.");
+      return;
+    }
+    if (program.verificationMethod === "BILL" && !billNumber.trim()) {
+      setError("Bill number is required for this program.");
       return;
     }
 
     setLoading(true);
     setError("");
     try {
+      const formData = new FormData();
+      formData.append("mobileNumber", mobileNumber);
+      formData.append("enteredName", enteredName);
+      formData.append("businessId", business.id);
+      if (billFile) formData.append("billPhoto", billFile);
+      if (billNumber) formData.append("billNumber", billNumber.trim());
+
       const res = await fetch("/api/customer/visit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mobileNumber,
-          enteredName,
-          billPhotoUrl,
-          businessId: business.id,
-        }),
+        body: formData,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to submit visit");
-      
+
       setSuccess("Visit request submitted! The business owner will review it.");
     } catch (err: any) {
       setError(err.message);
@@ -115,28 +123,7 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Invalid Claim Code");
-      
-      setClaimedReward(data.reward);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleInstantScratch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/customer/reward/instant-scratch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobileNumber, name: enteredName, businessId: business.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to process scratch card");
-      
       setClaimedReward(data.reward);
     } catch (err: any) {
       setError(err.message);
@@ -146,19 +133,6 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
   };
 
   if (claimedReward) {
-    if (claimedReward.type === "SCRATCH_CARD" && claimedReward.revealedPrize && !scratchComplete) {
-      return (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-slate-900 text-center">Reward Unlocked!</h2>
-          <p className="text-slate-600 text-center mb-6">Scratch the card below to reveal your prize.</p>
-          <ScratchCardComponent
-            revealedPrize={claimedReward.revealedPrize}
-            onScratchComplete={() => setScratchComplete(true)}
-          />
-        </div>
-      );
-    }
-
     return (
       <div className="text-center space-y-4">
         <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 animate-in zoom-in">
@@ -166,67 +140,13 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
         </div>
         <h2 className="text-2xl font-bold text-slate-900">Reward Claimed!</h2>
         <p className="text-slate-600">
-          You have successfully redeemed: <strong className="text-slate-900">{claimedReward.revealedPrize || claimedReward.title}</strong>.
-          <br/>Enjoy!
+          You have successfully redeemed: <strong className="text-slate-900">{claimedReward.title}</strong>.
+          <br />Enjoy!
         </p>
       </div>
     );
   }
 
-  // --- SCRATCH CARD FLOW ---
-  if (program.type === "SCRATCH_CARD") {
-    return (
-      <div className="space-y-6 w-full">
-        <form onSubmit={handleInstantScratch} className="space-y-4">
-          <div className="text-center mb-6">
-            <h3 className="font-bold text-indigo-900 text-xl">Play for a Prize!</h3>
-            <p className="text-sm text-indigo-600">Enter your details to instantly win a scratch card reward.</p>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Mobile Number</label>
-            <div className="relative">
-              <Smartphone className="absolute left-3 top-2.5 w-5 h-5 text-slate-400" />
-              <input
-                type="tel"
-                required
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                placeholder="Enter your number"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Name (Optional)</label>
-            <input
-              type="text"
-              value={enteredName}
-              onChange={(e) => setEnteredName(e.target.value)}
-              placeholder="What should we call you?"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none"
-            />
-          </div>
-          
-          {error && <p className="text-rose-600 text-xs font-semibold">{error}</p>}
-          
-          <button
-            type="submit"
-            disabled={loading || mobileNumber.length < 5}
-            className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-              <>
-                <Sparkles className="w-5 h-5" />
-                Get Scratch Card
-              </>
-            )}
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  // --- VISITS FLOW ---
   return (
     <div className="space-y-6 w-full">
       <form onSubmit={handleSubmitVisit} className="space-y-4">
@@ -258,7 +178,18 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
             ) : (
               <span>New here? Submitting will create your loyalty profile.</span>
             )}
+            {business.instagramHandle && <InstagramButton handle={business.instagramHandle} />}
           </div>
+        )}
+
+        {progress?.exists && progress.membershipId && business.googleReviewUrl && (
+          <GoogleReviewModal
+            membershipId={progress.membershipId}
+            businessName={business.name}
+            googleReviewUrl={business.googleReviewUrl}
+            currentVisits={progress.currentVisits}
+            reviewPromptedAt={progress.reviewPromptedAt ? new Date(progress.reviewPromptedAt) : null}
+          />
         )}
 
         {progress?.eligibleForReward ? (
@@ -267,7 +198,7 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
               <Award className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
               <h3 className="font-bold text-emerald-900">Reward Available!</h3>
               <p className="text-emerald-700 text-xs mb-4">Ask the cashier for your claim code.</p>
-              
+
               <div className="space-y-3">
                 <input
                   type="text"
@@ -277,7 +208,7 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
                   placeholder="Enter 6-character code"
                   className="w-full px-4 py-3 text-center tracking-widest text-lg font-mono rounded-xl border border-emerald-300 focus:ring-2 focus:ring-emerald-600 outline-none uppercase"
                 />
-                
+
                 {error && <p className="text-rose-600 text-xs font-semibold">{error}</p>}
 
                 <button
@@ -306,17 +237,28 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
 
             {program.verificationMethod === "BILL" && (
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Bill Photo URL (For Demo)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Bill Number</label>
                 <input
                   type="text"
                   required
-                  value={billPhotoUrl}
-                  onChange={(e) => setBillPhotoUrl(e.target.value)}
-                  placeholder="https://example.com/bill.jpg"
+                  value={billNumber}
+                  onChange={(e) => setBillNumber(e.target.value)}
+                  placeholder="e.g. the receipt/invoice number"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none"
                 />
               </div>
             )}
+
+            {program.verificationMethod === "BILL" && (
+              <BillPhotoInput
+                file={billFile}
+                onFileSelect={(file, fileError) => {
+                  setBillFile(file);
+                  setBillFileError(fileError);
+                }}
+              />
+            )}
+            {billFileError && <p className="text-rose-600 text-xs font-semibold">{billFileError}</p>}
 
             {error && <p className="text-rose-600 text-xs font-semibold">{error}</p>}
             {success && <p className="text-emerald-600 text-xs font-semibold">{success}</p>}
@@ -324,7 +266,7 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
             {!success && (
               <button
                 type="submit"
-                disabled={loading || mobileNumber.length < 5}
+                disabled={loading || mobileNumber.length < 5 || !!billFileError}
                 className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Visit"}

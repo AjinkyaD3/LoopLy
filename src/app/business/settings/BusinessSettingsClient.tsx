@@ -18,11 +18,13 @@ interface BusinessSettingsProps {
       id: string;
       programName: string;
       requiredVisits: number;
+      windowType: string;
+      windowDays: number | null;
+      windowStartsAt: Date | null;
       rewardTitle: string;
       rewardDescription: string;
       rewardValidityDays: number;
       verificationMethod: string;
-      rewardType: string;
       isActive: boolean;
     } | null;
   };

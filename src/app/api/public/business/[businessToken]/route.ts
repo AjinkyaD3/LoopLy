@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { isValidBusinessToken } from "@/lib/token";
+import { isValidToken } from "@/lib/token";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export async function GET(
     const { businessToken } = params;
 
     // 1. Validate token format before querying database
-    if (!businessToken || !isValidBusinessToken(businessToken)) {
+    if (!businessToken || !isValidToken(businessToken)) {
       return NextResponse.json(
         { error: "Invalid business token format." },
         { status: 404 }

@@ -27,7 +27,7 @@ export default async function BusinessDashboardPage() {
   // Intelligently check if the owner has already configured a business
   const business = await prisma.business.findUnique({
     where: { ownerId: user.id },
-    include: { loyaltyProgram: { include: { scratchCardPrizes: true } } },
+    include: { loyaltyProgram: true },
   });
 
   // If business is configured, fetch live membership count & QR assets
@@ -130,6 +130,12 @@ export default async function BusinessDashboardPage() {
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   Token: {business.businessToken}
                 </span>
+                <Link
+                  href="/business/campaigns"
+                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5"
+                >
+                  Campaigns
+                </Link>
                 <Link
                   href="/business/settings"
                   className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5"

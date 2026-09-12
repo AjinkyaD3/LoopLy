@@ -102,7 +102,6 @@ async function main() {
     data: {
       customerId: customer.id,
       businessId: businessA.id,
-      currentVisits: 2,
       totalVisits: 7,
     },
   });
@@ -151,7 +150,7 @@ async function main() {
   });
 
   console.log(`✓ Created Membership A: Customer -> ${businessA.name}`);
-  console.log(`  - Current Progress: ${membershipA.currentVisits}/${businessA.loyaltyProgram?.requiredVisits}`);
+  console.log(`  - Current Progress (lifetime): ${membershipA.totalVisits}/${businessA.loyaltyProgram?.requiredVisits}`);
   console.log(`  - Total Visits: ${membershipA.totalVisits}`);
   console.log(`  - Active Reward: ${rewardA.title} (Status: ${rewardA.status})`);
   console.log(`  - Pending Request: ID ${pendingRequestA.id} (${pendingRequestA.method})`);
@@ -162,7 +161,6 @@ async function main() {
     data: {
       customerId: customer.id,
       businessId: businessB.id,
-      currentVisits: 1,
       totalVisits: 1,
     },
   });
@@ -192,7 +190,7 @@ async function main() {
   });
 
   console.log(`✓ Created Membership B: Customer -> ${businessB.name}`);
-  console.log(`  - Current Progress: ${membershipB.currentVisits}/${businessB.loyaltyProgram?.requiredVisits}`);
+  console.log(`  - Current Progress (lifetime): ${membershipB.totalVisits}/${businessB.loyaltyProgram?.requiredVisits}`);
   console.log(`  - Total Visits: ${membershipB.totalVisits}`);
   console.log(`  - Active Rewards: 0`);
   console.log(`  - Pending Request: ID ${pendingRequestB.id} (${pendingRequestB.method})`);

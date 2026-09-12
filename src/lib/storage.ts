@@ -85,6 +85,15 @@ export async function uploadBillImage(
   }
 
   // Local fallback: save to public/uploads/bills/
+  // Now that this route has a real caller, a fallback taken here means the actual bill
+  // image is NOT durably stored on typical serverless deployments (Vercel's filesystem is
+  // ephemeral outside /tmp) — surfaced as an error-level log, not a warning, so it's visible
+  // in production monitoring rather than silently swallowed.
+  console.error(
+    `[ALERT] Bill upload fell back to local disk storage — Supabase Storage unavailable or ` +
+    `misconfigured. storagePath=${storagePath}. On a serverless deployment this file will ` +
+    `not persist across cold starts/deploys.`
+  );
   try {
     const localDir = path.join(process.cwd(), "public", "uploads", "bills", path.dirname(storagePath));
     await ensureLocalDir(localDir);

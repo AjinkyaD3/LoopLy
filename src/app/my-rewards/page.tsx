@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Smartphone, Loader2, Award, Gift, ChevronRight, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
+import { Sparkles, Smartphone, Loader2, Award, Gift, CheckCircle2 } from "lucide-react";
 
 type ProgressData = {
   currentVisits: number;
@@ -11,17 +10,10 @@ type ProgressData = {
   rewardTitle: string;
 };
 
-type WinData = {
-  title: string;
-  date: string;
-};
-
 type MembershipData = {
   businessName: string;
   programName: string;
-  programType: "VISITS" | "SCRATCH_CARD";
-  progress?: ProgressData;
-  wins?: WinData[];
+  progress: ProgressData;
 };
 
 export default function MyRewardsPage() {
@@ -124,67 +116,39 @@ export default function MyRewardsPage() {
                         <p className="text-xs text-slate-500">{m.programName}</p>
                       </div>
                       <div className="bg-white p-2 rounded-lg border border-slate-100 shadow-xs">
-                        {m.programType === "VISITS" ? (
-                          <Award className="w-5 h-5 text-indigo-600" />
-                        ) : (
-                          <Sparkles className="w-5 h-5 text-amber-500" />
-                        )}
+                        <Award className="w-5 h-5 text-indigo-600" />
                       </div>
                     </div>
-                    
-                    <div className="px-5 py-4">
-                      {m.programType === "VISITS" && m.progress && (
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-end mb-1">
-                            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Progress</span>
-                            <span className="text-sm font-bold text-indigo-600">
-                              {m.progress.currentVisits} / {m.progress.requiredVisits} visits
-                            </span>
-                          </div>
-                          <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-indigo-600 transition-all duration-500 ease-out"
-                              style={{ width: `${Math.min(100, (m.progress.currentVisits / m.progress.requiredVisits) * 100)}%` }}
-                            />
-                          </div>
-                          
-                          {m.progress.rewardAvailable ? (
-                            <div className="mt-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-2">
-                              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-                              <div>
-                                <h4 className="text-sm font-bold text-emerald-900">Reward Available!</h4>
-                                <p className="text-xs text-emerald-700">You&apos;ve unlocked: <strong>{m.progress.rewardTitle}</strong>. Ask the cashier for your claim code on your next visit to redeem.</p>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-500 text-center mt-2">
-                              {m.progress.requiredVisits - m.progress.currentVisits} more visits to unlock: <strong className="text-slate-700">{m.progress.rewardTitle}</strong>
-                            </p>
-                          )}
-                        </div>
-                      )}
 
-                      {m.programType === "SCRATCH_CARD" && m.wins && (
-                        <div>
-                          {m.wins.length === 0 ? (
-                            <p className="text-xs text-slate-500 text-center italic">No prizes won yet. Visit the store and scan their QR to play!</p>
-                          ) : (
-                            <div className="space-y-2">
-                              <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Past Wins</h4>
-                              <div className="space-y-2">
-                                {m.wins.map((win, wIdx) => (
-                                  <div key={wIdx} className="flex justify-between items-center p-3 rounded-lg border border-slate-100 bg-slate-50">
-                                    <span className="text-sm font-semibold text-slate-800">{win.title}</span>
-                                    <span className="text-xs text-slate-400">
-                                      {new Date(win.date).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                    <div className="px-5 py-4">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-end mb-1">
+                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Progress</span>
+                          <span className="text-sm font-bold text-indigo-600">
+                            {m.progress.currentVisits} / {m.progress.requiredVisits} visits
+                          </span>
                         </div>
-                      )}
+                        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-indigo-600 transition-all duration-500 ease-out"
+                            style={{ width: `${Math.min(100, (m.progress.currentVisits / m.progress.requiredVisits) * 100)}%` }}
+                          />
+                        </div>
+
+                        {m.progress.rewardAvailable ? (
+                          <div className="mt-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                            <div>
+                              <h4 className="text-sm font-bold text-emerald-900">Reward Available!</h4>
+                              <p className="text-xs text-emerald-700">You&apos;ve unlocked: <strong>{m.progress.rewardTitle}</strong>. Ask the cashier for your claim code on your next visit to redeem.</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-500 text-center mt-2">
+                            {m.progress.requiredVisits - m.progress.currentVisits} more visits to unlock: <strong className="text-slate-700">{m.progress.rewardTitle}</strong>
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireBusinessOwner } from "@/lib/auth";
 import { VerificationReviewSchema } from "@/lib/validations";
-import crypto from "crypto";
+import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 function generateClaimCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -23,8 +23,12 @@ export const dynamic = "force-dynamic";
  *   1. Re-verify ownership and PENDING status inside the transaction.
  *   2. Mark request APPROVED + reviewedAt.
  *   3. Create immutable Visit (unique verificationRequestId prevents duplicate visits).
- *   4. Increment membership currentVisits + totalVisits.
- *   5. If currentVisits >= requiredVisits → create Reward + reset currentVisits to 0.
+ *   4. Increment membership totalVisits (lifetime tally only — no resettable counter).
+ *   5. Compute threshold eligibility per the program's window (LIFETIME/ROLLING/
+ *      FIXED_PERIOD) via computeThresholdEligibility() — if it qualifies, create a Reward
+ *      stamped with the next ordinal thresholdCycle. Reward.@@unique([membershipId,
+ *      loyaltyProgramId, thresholdCycle]) is the DB-level guard against ever minting the
+ *      same cycle twice, even under a concurrent-approval race.
  *
  * REJECT:
  *   - Mark request REJECTED + reviewedAt + optional rejectionReason.
@@ -103,7 +107,7 @@ export async function PATCH(
       });
 
       // 2. Create immutable Visit (unique constraint on verificationRequestId prevents double)
-      await tx.visit.create({
+      const newVisit = await tx.visit.create({
         data: {
           membershipId: vr.membershipId,
           businessId: vr.businessId,
@@ -112,28 +116,21 @@ export async function PATCH(
         },
       });
 
-      // 3. Increment membership visits
+      // 3. Increment lifetime visit tally
       const updatedMembership = await tx.membership.update({
         where: { id: vr.membershipId },
-        data: {
-          currentVisits: { increment: 1 },
-          totalVisits: { increment: 1 },
-        },
+        data: { totalVisits: { increment: 1 } },
       });
 
-      const { requiredVisits, rewardTitle, rewardDescription, rewardValidityDays, rewardType, type: programType, id: loyaltyProgramId } =
-        business.loyaltyProgram!;
+      const program = business.loyaltyProgram!;
+      const { requiredVisits, rewardTitle, rewardDescription, rewardValidityDays, id: loyaltyProgramId } = program;
 
       let reward = null;
 
-      // 4. Check threshold and create reward if earned
-      if (updatedMembership.currentVisits >= requiredVisits) {
-        
-        // Only VISITS programs have this VisitRequest approval flow
-        if (programType !== "VISITS") {
-           throw new Error("INVALID_PROGRAM_TYPE");
-        }
+      // 4. Check windowed threshold eligibility and create reward if earned
+      const eligibility = await computeThresholdEligibility(tx, vr.membershipId, program);
 
+      if (eligibility.qualifies) {
         const claimCode = generateClaimCode();
 
         reward = await tx.reward.create({
@@ -145,22 +142,18 @@ export async function PATCH(
             title: rewardTitle,
             description: rewardDescription,
             status: "AVAILABLE",
-            type: rewardType,
+            type: "STANDARD",
             claimCode,
+            thresholdCycle: eligibility.nextCycle,
+            thresholdVisitId: newVisit.id,
             expiresAt: new Date(now.getTime() + rewardValidityDays * 24 * 60 * 60 * 1000),
           },
-        });
-
-        // 5. Reset currentVisits after reward earned
-        await tx.membership.update({
-          where: { id: vr.membershipId },
-          data: { currentVisits: 0 },
         });
       }
 
       return {
-        membershipCurrentVisits: updatedMembership.currentVisits,
         membershipTotalVisits: updatedMembership.totalVisits,
+        qualifyingVisits: eligibility.qualifyingVisits,
         rewardEarned: reward !== null,
         requiredVisits,
         claimCode: reward?.claimCode,
@@ -170,13 +163,13 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       approved: true,
-      membershipCurrentVisits: result.membershipCurrentVisits,
       membershipTotalVisits: result.membershipTotalVisits,
+      qualifyingVisits: result.qualifyingVisits,
       rewardEarned: result.rewardEarned,
       claimCode: result.claimCode,
       message: result.rewardEarned
         ? "Visit approved and reward earned!"
-        : `Visit approved. ${result.membershipCurrentVisits}/${result.requiredVisits} visits toward next reward.`,
+        : `Visit approved. ${result.qualifyingVisits}/${result.requiredVisits} visits toward next reward.`,
     });
   } catch (err: unknown) {
     const msg = (err as Error).message;

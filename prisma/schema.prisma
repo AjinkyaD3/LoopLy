@@ -40,9 +40,10 @@ enum RewardType {
   SCRATCH_CARD
 }
 
-enum ProgramType {
-  VISITS
-  SCRATCH_CARD
+enum WindowType {
+  LIFETIME
+  ROLLING
+  FIXED_PERIOD
 }
 
 // -----------------------------------------------------------------------------
@@ -131,7 +132,7 @@ model Business {
   businessToken String   @unique
   ownerId       String   @unique
   owner         User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  
+
   googleReviewUrl String?
   instagramHandle String?
   youtubeHandle   String?
@@ -142,6 +143,7 @@ model Business {
   updatedAt     DateTime @updatedAt
 
   loyaltyProgram       LoyaltyProgram?
+  campaigns            Campaign[]
   memberships          Membership[]
   customers            Customer[]
   visitRequests        VisitRequest[]
@@ -157,14 +159,23 @@ model LoyaltyProgram {
   businessId         String             @unique
   business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
   programName        String
-  type               ProgramType        @default(VISITS)
   requiredVisits     Int                @default(10)
+  // How the requiredVisits threshold is counted:
+  //   LIFETIME     — all approved visits ever (existing behavior)
+  //   ROLLING      — visits within the trailing windowDays, re-anchored after each reward
+  //   FIXED_PERIOD — visits since windowStartsAt
+  windowType         WindowType         @default(LIFETIME)
+  windowDays         Int?               // required (Zod-enforced) when windowType == ROLLING
+  windowStartsAt     DateTime?          // required (Zod-enforced) when windowType == FIXED_PERIOD
   rewardTitle        String
   rewardDescription  String
   rewardValidityDays Int                @default(30)
   verificationMethod VerificationMethod @default(VISIT_CONFIRMATION)
-  rewardType         RewardType         @default(STANDARD)
   isActive           Boolean            @default(true)
+  // Set true only for programs auto-paused when scratch-card mode was retired from
+  // LoyaltyProgram in favor of the standalone Campaign subsystem — drives a one-time
+  // dashboard banner for the affected owner, cleared once they dismiss it.
+  retiredScratchNotice Boolean          @default(false)
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -175,8 +186,11 @@ model LoyaltyProgram {
 }
 
 // -----------------------------------------------------------------------------
-// SCRATCH CARD PRIZE (For SCRATCH_CARD programs)
+// SCRATCH CARD PRIZE (LEGACY — frozen historical data only)
 // -----------------------------------------------------------------------------
+// Retained solely to preserve referential integrity for pre-existing LoyaltyProgram
+// (type = SCRATCH_CARD) rows and their historical Reward rows. No new code path creates
+// rows here — scratch-style plays now live entirely under the Campaign subsystem below.
 
 model ScratchCardPrize {
   id               String         @id @default(cuid())
@@ -194,6 +208,62 @@ model ScratchCardPrize {
 }
 
 // -----------------------------------------------------------------------------
+// CAMPAIGN (Standalone promotional scratch-card campaigns — independent of the
+// loyalty program; not tied to a visit, purchase, or approval)
+// -----------------------------------------------------------------------------
+
+model Campaign {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name            String
+  campaignToken   String   @unique
+  startsAt        DateTime
+  endsAt          DateTime?
+  endedManuallyAt DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  prizes CampaignPrize[]
+  plays  CampaignPlay[]
+
+  @@index([businessId])
+  @@index([campaignToken])
+}
+
+model CampaignPrize {
+  id             String   @id @default(cuid())
+  campaignId     String
+  campaign       Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  title          String
+  weight         Int
+  totalStock     Int
+  remainingStock Int
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  plays CampaignPlay[]
+
+  @@index([campaignId])
+}
+
+model CampaignPlay {
+  id            String         @id @default(cuid())
+  campaignId    String
+  campaign      Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  mobileNumber  String
+  customerName  String?
+  wonPrizeId    String?
+  wonPrize      CampaignPrize? @relation(fields: [wonPrizeId], references: [id], onDelete: SetNull)
+  revealedPrize String
+  playedAt      DateTime       @default(now())
+
+  // The one-play-per-mobile-number-per-campaign gate, enforced at the DB level.
+  @@unique([campaignId, mobileNumber])
+  @@index([campaignId])
+}
+
+// -----------------------------------------------------------------------------
 // MEMBERSHIP (Customer <-> Business Association)
 // -----------------------------------------------------------------------------
 
@@ -203,7 +273,10 @@ model Membership {
   customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   businessId    String
   business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  currentVisits Int      @default(0) // Progress towards current reward threshold
+  // currentVisits removed — a resettable running counter cannot represent a rolling or
+  // fixed-period window. Progress is now always computed from Visit rows at read time
+  // (see src/lib/loyaltyProgress.ts). totalVisits is safe to keep stored: it is a pure
+  // lifetime tally with no window semantics, so it never needs to "reset" or go stale.
   totalVisits   Int      @default(0) // Lifetime verified visits count
   reviewPromptedAt DateTime?
   joinedAt      DateTime @default(now())
@@ -235,6 +308,15 @@ model VisitRequest {
   enteredName     String?
   method          VerificationMethod
   billImagePath   String? // Supabase Storage object path (nullable for VISIT_CONFIRMATION)
+  billNumber      String? // customer-typed bill/receipt number, required (Zod) when method == BILL
+  billImageHash   String? // perceptual dHash (hex), required (Zod) when method == BILL
+  // Soft flag, not a hard reject — the owner is the final arbiter. Set when billNumber or
+  // billImageHash matches another VisitRequest for the same business within the last 90
+  // days, surfaced as a warning badge in BusinessRequestsPanel before approval.
+  duplicateSuspected  Boolean       @default(false)
+  duplicateOfRequestId String?
+  duplicateOfRequest   VisitRequest? @relation("DuplicateOf", fields: [duplicateOfRequestId], references: [id], onDelete: SetNull)
+  duplicateFlaggedBy   VisitRequest[] @relation("DuplicateOf")
   status          RequestStatus      @default(PENDING)
   rejectionReason String?
   reviewedAt      DateTime?
@@ -247,6 +329,8 @@ model VisitRequest {
   @@index([membershipId])
   @@index([customerId])
   @@index([status])
+  @@index([businessId, billNumber])
+  @@index([businessId, billImageHash])
 }
 
 // -----------------------------------------------------------------------------
@@ -265,10 +349,15 @@ model Visit {
   verificationRequest   VisitRequest?        @relation(fields: [verificationRequestId], references: [id], onDelete: SetNull)
   visitedAt             DateTime             @default(now())
 
+  thresholdCompletionFor Reward[]            @relation("ThresholdCompletingVisit")
+
   @@index([membershipId])
   @@index([businessId])
   @@index([customerId])
   @@index([visitedAt])
+  // Composite: efficient "visits for this membership since <date>" range scans, used by
+  // both threshold-eligibility computation and the read-only progress endpoints.
+  @@index([membershipId, visitedAt])
 }
 
 // -----------------------------------------------------------------------------
@@ -294,6 +383,17 @@ model Reward {
   scratchCardPrize   ScratchCardPrize? @relation(fields: [scratchCardPrizeId], references: [id], onDelete: SetNull)
   isScratched        Boolean           @default(false)
   revealedPrize      String?
+  // Which ordinal threshold-crossing this reward represents (1, 2, 3, ...) for a given
+  // membership+program — null for non-threshold reward rows (including every historical
+  // SCRATCH_CARD row). The unique constraint below is the DB-level guarantee that the same
+  // cycle can never be minted twice for one membership+program, regardless of application
+  // bugs or concurrent approval attempts.
+  thresholdCycle     Int?
+  // The specific Visit whose approval completed this threshold cycle — used as the anchor
+  // for the next cycle's window start in ROLLING mode. Null on backfilled historical rows,
+  // where no such link was ever tracked.
+  thresholdVisitId   String?
+  thresholdVisit     Visit?            @relation("ThresholdCompletingVisit", fields: [thresholdVisitId], references: [id], onDelete: SetNull)
   expiresAt        DateTime
   redeemedAt       DateTime?
   redeemedByUserId String?
@@ -305,4 +405,7 @@ model Reward {
   @@index([businessId])
   @@index([customerId])
   @@index([status])
+  // NULL-safe: Postgres allows multiple NULLs, so this only constrains actual
+  // threshold-triggered rewards, never colliding with non-threshold reward rows.
+  @@unique([membershipId, loyaltyProgramId, thresholdCycle])
 }

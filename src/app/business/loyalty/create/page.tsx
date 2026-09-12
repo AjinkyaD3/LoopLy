@@ -6,7 +6,6 @@ import { VerificationMethod } from "@prisma/client";
 import Link from "next/link";
 import {
   Sparkles,
-  Award,
   ArrowRight,
   Loader2,
   AlertCircle,
@@ -14,16 +13,16 @@ import {
   FileCheck,
   Receipt,
   ArrowLeft,
-  ListOrdered,
-  Plus
 } from "lucide-react";
 
 export default function CreateLoyaltyProgramPage() {
   const router = useRouter();
 
-  const [programType, setProgramType] = useState<"VISITS" | "SCRATCH_CARD">("VISITS");
   const [programName, setProgramName] = useState("");
   const [requiredVisits, setRequiredVisits] = useState(5);
+  const [windowType, setWindowType] = useState<"LIFETIME" | "ROLLING" | "FIXED_PERIOD">("LIFETIME");
+  const [windowDays, setWindowDays] = useState(90);
+  const [windowStartsAt, setWindowStartsAt] = useState("");
   const [rewardTitle, setRewardTitle] = useState("");
   const [rewardDescription, setRewardDescription] = useState("");
   const [rewardValidityDays, setRewardValidityDays] = useState(30);
@@ -31,32 +30,8 @@ export default function CreateLoyaltyProgramPage() {
     VerificationMethod.VISIT_CONFIRMATION
   );
 
-  const [prizes, setPrizes] = useState(Array(3).fill({ title: "", description: "", weight: 10 }));
-
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const handlePrizeChange = (index: number, field: string, value: string | number) => {
-    const newPrizes = [...prizes];
-    newPrizes[index] = { ...newPrizes[index], [field]: value };
-    setPrizes(newPrizes);
-  };
-
-  const handleAddPrize = () => {
-    if (prizes.length < 10) {
-      setPrizes([...prizes, { title: "", description: "", weight: 10 }]);
-    }
-  };
-
-  const handleRemovePrize = (index: number) => {
-    if (prizes.length > 3) {
-      const newPrizes = [...prizes];
-      newPrizes.splice(index, 1);
-      setPrizes(newPrizes);
-    }
-  };
-
-  const totalWeight = prizes.reduce((sum, p) => sum + (Number(p.weight) || 0), 0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,49 +42,40 @@ export default function CreateLoyaltyProgramPage() {
       return;
     }
     if (!rewardTitle.trim() || rewardTitle.trim().length < 2) {
-      setError("Reward/Program title must be at least 2 characters.");
+      setError("Reward title must be at least 2 characters.");
       return;
     }
     if (rewardValidityDays < 1 || rewardValidityDays > 365) {
       setError("Reward validity days must be between 1 and 365.");
       return;
     }
-
-    if (programType === "VISITS") {
-      if (requiredVisits < 1 || requiredVisits > 100) {
-        setError("Required visits must be between 1 and 100.");
-        return;
-      }
-    } else {
-      for (let i = 0; i < prizes.length; i++) {
-        if (!prizes[i].title.trim() || prizes[i].title.trim().length < 2) {
-          setError(`Prize ${i + 1} title must be at least 2 characters.`);
-          return;
-        }
-        if (prizes[i].weight <= 0) {
-          setError(`Prize ${i + 1} weight must be positive.`);
-          return;
-        }
-      }
+    if (requiredVisits < 1 || requiredVisits > 100) {
+      setError("Required visits must be between 1 and 100.");
+      return;
+    }
+    if (windowType === "ROLLING" && (!windowDays || windowDays < 1)) {
+      setError("Rolling window requires a number of days.");
+      return;
+    }
+    if (windowType === "FIXED_PERIOD" && !windowStartsAt) {
+      setError("Fixed period requires a start date.");
+      return;
     }
 
     setLoading(true);
 
     try {
       const payload = {
-        type: programType,
         programName: programName.trim(),
-        requiredVisits: programType === "VISITS" ? Number(requiredVisits) : 10,
+        requiredVisits: Number(requiredVisits),
+        windowType,
+        windowDays: windowType === "ROLLING" ? Number(windowDays) : null,
+        windowStartsAt: windowType === "FIXED_PERIOD" ? new Date(windowStartsAt).toISOString() : null,
         rewardTitle: rewardTitle.trim(),
         rewardDescription: rewardDescription.trim(),
         rewardValidityDays: Number(rewardValidityDays),
         verificationMethod,
         isActive: true,
-        prizes: programType === "SCRATCH_CARD" ? prizes.map(p => ({
-          title: p.title.trim(),
-          description: p.description.trim(),
-          weight: Number(p.weight)
-        })) : undefined
       };
 
       const res = await fetch("/api/business/loyalty", {
@@ -160,7 +126,12 @@ export default function CreateLoyaltyProgramPage() {
               Start a Loyalty Program
             </h1>
             <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-lg">
-              Choose your program type and customize the rewards.
+              Customers collect visits to unlock a fixed reward. Looking for an instant-win
+              promotion instead? Set up a{" "}
+              <Link href="/business/campaigns/create" className="text-indigo-600 font-semibold underline underline-offset-2">
+                Campaign
+              </Link>{" "}
+              — it&apos;s independent of this program.
             </p>
           </div>
 
@@ -175,42 +146,6 @@ export default function CreateLoyaltyProgramPage() {
 
               <div className="space-y-3">
                 <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 pb-1 border-b border-slate-200">
-                  <Award className="w-3.5 h-3.5 text-indigo-600" />
-                  Program Type
-                </div>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setProgramType("VISITS")}
-                    className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-colors ${
-                      programType === "VISITS"
-                        ? "bg-indigo-50 border-indigo-300 ring-1 ring-indigo-200 text-indigo-700"
-                        : "bg-white border-slate-200 hover:bg-slate-50 text-slate-600"
-                    }`}
-                  >
-                    <ListOrdered className="w-6 h-6" />
-                    <span className="text-sm font-semibold">Visits Threshold</span>
-                    <span className="text-xs text-center opacity-70">Customers collect visits to unlock a fixed reward.</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setProgramType("SCRATCH_CARD")}
-                    className={`p-4 rounded-xl border flex flex-col items-center gap-2 transition-colors ${
-                      programType === "SCRATCH_CARD"
-                        ? "bg-indigo-50 border-indigo-300 ring-1 ring-indigo-200 text-indigo-700"
-                        : "bg-white border-slate-200 hover:bg-slate-50 text-slate-600"
-                    }`}
-                  >
-                    <Sparkles className="w-6 h-6" />
-                    <span className="text-sm font-semibold">Instant Scratch Card</span>
-                    <span className="text-xs text-center opacity-70">No visits needed. Customers instantly win from weighted prizes.</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 pb-1 border-b border-slate-200 mt-6">
                   <Gift className="w-3.5 h-3.5 text-indigo-600" />
                   General Details
                 </div>
@@ -231,23 +166,21 @@ export default function CreateLoyaltyProgramPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  {programType === "VISITS" && (
-                    <div>
-                      <label htmlFor="required-visits" className="block text-xs font-semibold text-slate-800 mb-1">
-                        Required Visits <span className="text-rose-500">*</span>
-                      </label>
-                      <input
-                        id="required-visits"
-                        type="number"
-                        min={1}
-                        max={100}
-                        required
-                        value={requiredVisits}
-                        onChange={(e) => setRequiredVisits(parseInt(e.target.value, 10) || 1)}
-                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
-                      />
-                    </div>
-                  )}
+                  <div>
+                    <label htmlFor="required-visits" className="block text-xs font-semibold text-slate-800 mb-1">
+                      Required Visits <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      id="required-visits"
+                      type="number"
+                      min={1}
+                      max={100}
+                      required
+                      value={requiredVisits}
+                      onChange={(e) => setRequiredVisits(parseInt(e.target.value, 10) || 1)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                    />
+                  </div>
 
                   <div>
                     <label htmlFor="validity-days" className="block text-xs font-semibold text-slate-800 mb-1">
@@ -269,9 +202,70 @@ export default function CreateLoyaltyProgramPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-slate-800">
+                    How should the {requiredVisits}-visit threshold be counted?
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["LIFETIME", "ROLLING", "FIXED_PERIOD"] as const).map((wt) => (
+                      <button
+                        key={wt}
+                        type="button"
+                        onClick={() => setWindowType(wt)}
+                        className={`p-2.5 rounded-xl border text-[11px] font-semibold transition-colors ${
+                          windowType === wt
+                            ? "bg-indigo-50 border-indigo-300 text-indigo-700 ring-1 ring-indigo-200"
+                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {wt === "LIFETIME" ? "Lifetime" : wt === "ROLLING" ? "Rolling Window" : "Fixed Period"}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {windowType === "LIFETIME" && "Counts all approved visits ever, repeating every time the threshold is hit again."}
+                    {windowType === "ROLLING" && "Counts visits within a trailing number of days — e.g. \"10 visits in the last 90 days.\""}
+                    {windowType === "FIXED_PERIOD" && "Counts visits since a specific date you choose."}
+                  </p>
+
+                  {windowType === "ROLLING" && (
+                    <div>
+                      <label htmlFor="window-days" className="block text-xs font-semibold text-slate-800 mb-1">
+                        Rolling Window (Days) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        id="window-days"
+                        type="number"
+                        min={1}
+                        max={3650}
+                        required
+                        value={windowDays}
+                        onChange={(e) => setWindowDays(parseInt(e.target.value, 10) || 1)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                  )}
+
+                  {windowType === "FIXED_PERIOD" && (
+                    <div>
+                      <label htmlFor="window-starts-at" className="block text-xs font-semibold text-slate-800 mb-1">
+                        Counting Since <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        id="window-starts-at"
+                        type="date"
+                        required
+                        value={windowStartsAt}
+                        onChange={(e) => setWindowStartsAt(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label htmlFor="reward-title" className="block text-xs font-semibold text-slate-800 mb-1">
-                    {programType === "VISITS" ? "Reward Title" : "Scratch Card Title"} <span className="text-rose-500">*</span>
+                    Reward Title <span className="text-rose-500">*</span>
                   </label>
                   <input
                     id="reward-title"
@@ -279,7 +273,7 @@ export default function CreateLoyaltyProgramPage() {
                     required
                     value={rewardTitle}
                     onChange={(e) => setRewardTitle(e.target.value)}
-                    placeholder={programType === "VISITS" ? "e.g. Free Haircut" : "e.g. Daily Spin & Win"}
+                    placeholder="e.g. Free Haircut"
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
                   />
                 </div>
@@ -299,111 +293,45 @@ export default function CreateLoyaltyProgramPage() {
                 </div>
               </div>
 
-              {programType === "SCRATCH_CARD" && (
-                <div className="space-y-3 pt-4 border-t border-slate-200 mt-6">
-                  <div className="flex flex-col mb-4">
-                    <span className="text-sm font-bold text-slate-900">Configure Prizes (Min 3, Max 10)</span>
-                    <span className="text-xs text-slate-500">Prizes are drawn based on their weight. We calculate the percentage for you!</span>
-                  </div>
-                  {prizes.map((prize, idx) => {
-                    const percentage = totalWeight > 0 ? ((Number(prize.weight) || 0) / totalWeight * 100).toFixed(1) : "0";
-                    return (
-                      <div key={idx} className="p-4 border border-slate-200 rounded-xl bg-slate-50 space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Prize {idx + 1}</span>
-                          {prizes.length > 3 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemovePrize(idx)}
-                              className="text-[11px] font-bold text-rose-500 hover:text-rose-600"
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div className="col-span-2">
-                            <label className="block text-xs font-semibold text-slate-800 mb-1">Title</label>
-                            <input
-                              type="text"
-                              required
-                              value={prize.title}
-                              onChange={(e) => handlePrizeChange(idx, "title", e.target.value)}
-                              placeholder="e.g. Free Coffee"
-                              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
-                            />
-                          </div>
-                          <div className="col-span-1">
-                            <label className="block text-xs font-semibold text-slate-800 mb-1">
-                              Weight <span className="text-indigo-600 font-normal">({percentage}%)</span>
-                            </label>
-                            <input
-                              type="number"
-                              min={1}
-                              required
-                              value={prize.weight}
-                              onChange={(e) => handlePrizeChange(idx, "weight", parseInt(e.target.value) || 1)}
-                              className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {prizes.length < 10 && (
-                    <button
-                      type="button"
-                      onClick={handleAddPrize}
-                      className="w-full py-2 border border-dashed border-slate-300 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      Add Prize
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {programType === "VISITS" && (
-                <div className="space-y-2.5 pt-4 border-t border-slate-200 mt-6">
-                  <label className="block text-xs font-semibold text-slate-800">
-                    How should customer visits be verified? <span className="text-rose-500">*</span>
+              <div className="space-y-2.5 pt-4 border-t border-slate-200 mt-6">
+                <label className="block text-xs font-semibold text-slate-800">
+                  How should customer visits be verified? <span className="text-rose-500">*</span>
+                </label>
+                <div className="space-y-2">
+                  <label className={`p-3.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-colors ${verificationMethod === VerificationMethod.VISIT_CONFIRMATION ? "bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                    <input
+                      type="radio"
+                      name="verificationMethod"
+                      checked={verificationMethod === VerificationMethod.VISIT_CONFIRMATION}
+                      onChange={() => setVerificationMethod(VerificationMethod.VISIT_CONFIRMATION)}
+                      className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div className="text-xs space-y-0.5">
+                      <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                        <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
+                        Visit Confirmation
+                      </span>
+                      <p className="text-slate-500 leading-relaxed text-[11px]">Customer says &quot;I&apos;m Visiting Today&quot;. You approve the visit.</p>
+                    </div>
                   </label>
-                  <div className="space-y-2">
-                    <label className={`p-3.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-colors ${verificationMethod === VerificationMethod.VISIT_CONFIRMATION ? "bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
-                      <input
-                        type="radio"
-                        name="verificationMethod"
-                        checked={verificationMethod === VerificationMethod.VISIT_CONFIRMATION}
-                        onChange={() => setVerificationMethod(VerificationMethod.VISIT_CONFIRMATION)}
-                        className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <div className="text-xs space-y-0.5">
-                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                          <FileCheck className="w-3.5 h-3.5 text-indigo-600" />
-                          Visit Confirmation
-                        </span>
-                        <p className="text-slate-500 leading-relaxed text-[11px]">Customer says &quot;I&apos;m Visiting Today&quot;. You approve the visit.</p>
-                      </div>
-                    </label>
-                    <label className={`p-3.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-colors ${verificationMethod === VerificationMethod.BILL ? "bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
-                      <input
-                        type="radio"
-                        name="verificationMethod"
-                        checked={verificationMethod === VerificationMethod.BILL}
-                        onChange={() => setVerificationMethod(VerificationMethod.BILL)}
-                        className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <div className="text-xs space-y-0.5">
-                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
-                          <Receipt className="w-3.5 h-3.5 text-indigo-600" />
-                          Bill Upload
-                        </span>
-                        <p className="text-slate-500 leading-relaxed text-[11px]">Customer uploads their bill. You review and approve it.</p>
-                      </div>
-                    </label>
-                  </div>
+                  <label className={`p-3.5 rounded-xl border flex items-start gap-3 cursor-pointer transition-colors ${verificationMethod === VerificationMethod.BILL ? "bg-indigo-50/50 border-indigo-300 ring-1 ring-indigo-200" : "bg-white border-slate-200 hover:bg-slate-50"}`}>
+                    <input
+                      type="radio"
+                      name="verificationMethod"
+                      checked={verificationMethod === VerificationMethod.BILL}
+                      onChange={() => setVerificationMethod(VerificationMethod.BILL)}
+                      className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <div className="text-xs space-y-0.5">
+                      <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                        <Receipt className="w-3.5 h-3.5 text-indigo-600" />
+                        Bill Upload
+                      </span>
+                      <p className="text-slate-500 leading-relaxed text-[11px]">Customer uploads their bill. You review and approve it.</p>
+                    </div>
+                  </label>
                 </div>
-              )}
+              </div>
 
               <div className="pt-4">
                 <button
