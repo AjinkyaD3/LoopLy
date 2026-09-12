@@ -32,7 +32,7 @@ interface TimelineItem {
   type: "JOIN" | "VISIT" | "REDEEM";
   title: string;
   customerName: string;
-  customerEmail: string;
+  customerMobile: string;
   timestamp: string;
 }
 
@@ -226,7 +226,7 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
                   <div>
                     <p className="font-semibold text-slate-900">{item.customerName}</p>
                     <p className="text-[11px] text-slate-600 mt-0.5">{item.title}</p>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{item.customerEmail}</p>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">{item.customerMobile}</p>
                   </div>
                 </div>
                 <div className="text-right text-[11px] text-slate-400 whitespace-nowrap">

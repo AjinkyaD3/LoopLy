@@ -10,7 +10,7 @@ interface Reward {
   description: string;
   expiresAt: string;
   createdAt: string;
-  customer: { name: string; email: string };
+  customer: { name: string; mobileNumber: string };
 }
 
 export default function BusinessRewardsPanel() {
@@ -88,7 +88,7 @@ export default function BusinessRewardsPanel() {
                 <div>
                   <p className="text-sm font-bold text-slate-900">{r.title}</p>
                   <p className="text-xs text-slate-600 font-semibold mt-0.5">{r.customer.name}</p>
-                  <p className="text-[11px] text-slate-400">{r.customer.email}</p>
+                  <p className="text-[11px] text-slate-400">{r.customer.mobileNumber}</p>
                   {r.description && (
                     <p className="text-[11px] text-slate-500 mt-1">{r.description}</p>
                   )}

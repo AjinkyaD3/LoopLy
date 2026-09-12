@@ -17,7 +17,7 @@ interface MemberItem {
   id: string;
   customerId: string;
   name: string;
-  email: string;
+  mobileNumber: string;
   joinedAt: string;
   currentVisits: number;
   totalVisits: number;
@@ -112,7 +112,7 @@ export default function BusinessMembersPanel() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h4 className="text-sm font-bold text-slate-900 leading-tight">{m.name}</h4>
-                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">{m.email}</p>
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">{m.mobileNumber}</p>
                   </div>
                   {isRewardReady && (
                     <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold flex items-center gap-1">
