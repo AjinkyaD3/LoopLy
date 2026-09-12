@@ -27,6 +27,9 @@ interface LoyaltyData {
   id: string;
   programName: string;
   requiredVisits: number;
+  windowType: "LIFETIME" | "ROLLING" | "FIXED_PERIOD";
+  windowDays: number | null;
+  windowStartsAt: string | Date | null;
   rewardTitle: string;
   rewardDescription: string | null;
   rewardValidityDays: number;
@@ -66,6 +69,11 @@ export default function BusinessDashboardTabs({
 
   const [programName, setProgramName] = useState(business.loyaltyProgram.programName);
   const [requiredVisits, setRequiredVisits] = useState(business.loyaltyProgram.requiredVisits);
+  const [windowType, setWindowType] = useState(business.loyaltyProgram.windowType);
+  const [windowDays, setWindowDays] = useState(business.loyaltyProgram.windowDays ?? 90);
+  const [windowStartsAt, setWindowStartsAt] = useState(
+    business.loyaltyProgram.windowStartsAt ? new Date(business.loyaltyProgram.windowStartsAt).toISOString().slice(0, 10) : ""
+  );
   const [rewardTitle, setRewardTitle] = useState(business.loyaltyProgram.rewardTitle);
   const [rewardDescription, setRewardDescription] = useState(business.loyaltyProgram.rewardDescription || "");
   const [rewardValidityDays, setRewardValidityDays] = useState(business.loyaltyProgram.rewardValidityDays);
@@ -92,12 +100,25 @@ export default function BusinessDashboardTabs({
     e.preventDefault();
     setLoyaltyError(null);
     setLoyaltySuccess(null);
+
+    if (windowType === "ROLLING" && (!windowDays || windowDays < 1)) {
+      setLoyaltyError("Rolling window requires a number of days.");
+      return;
+    }
+    if (windowType === "FIXED_PERIOD" && !windowStartsAt) {
+      setLoyaltyError("Fixed period requires a start date.");
+      return;
+    }
+
     setSavingLoyalty(true);
 
     try {
       const payload = {
         programName: programName.trim(),
         requiredVisits: Number(requiredVisits),
+        windowType,
+        windowDays: windowType === "ROLLING" ? Number(windowDays) : null,
+        windowStartsAt: windowType === "FIXED_PERIOD" ? new Date(windowStartsAt).toISOString() : null,
         rewardTitle: rewardTitle.trim(),
         rewardDescription: rewardDescription.trim(),
         rewardValidityDays: Number(rewardValidityDays),
@@ -444,6 +465,62 @@ export default function BusinessDashboardTabs({
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-slate-800">
+                How should the threshold be counted?
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["LIFETIME", "ROLLING", "FIXED_PERIOD"] as const).map((wt) => (
+                  <button
+                    key={wt}
+                    type="button"
+                    onClick={() => setWindowType(wt)}
+                    className={`p-2.5 rounded-xl border text-[11px] font-semibold transition-colors ${
+                      windowType === wt
+                        ? "bg-indigo-50 border-indigo-300 text-indigo-700 ring-1 ring-indigo-200"
+                        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {wt === "LIFETIME" ? "Lifetime" : wt === "ROLLING" ? "Rolling Window" : "Fixed Period"}
+                  </button>
+                ))}
+              </div>
+
+              {windowType === "ROLLING" && (
+                <div>
+                  <label htmlFor="edit-window-days" className="block text-xs font-semibold text-slate-800 mb-1">
+                    Rolling Window (Days)
+                  </label>
+                  <input
+                    id="edit-window-days"
+                    type="number"
+                    min={1}
+                    max={3650}
+                    required
+                    value={windowDays}
+                    onChange={(e) => setWindowDays(parseInt(e.target.value, 10) || 1)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              )}
+
+              {windowType === "FIXED_PERIOD" && (
+                <div>
+                  <label htmlFor="edit-window-starts-at" className="block text-xs font-semibold text-slate-800 mb-1">
+                    Counting Since
+                  </label>
+                  <input
+                    id="edit-window-starts-at"
+                    type="date"
+                    required
+                    value={windowStartsAt}
+                    onChange={(e) => setWindowStartsAt(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  />
+                </div>
+              )}
             </div>
 
             <div>

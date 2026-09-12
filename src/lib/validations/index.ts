@@ -91,14 +91,27 @@ export const BusinessUpdateSchema = z.object({
   youtubeHandle: z.string().optional().or(z.literal("")),
 });
 
+export const WindowTypeSchema = z.enum(["LIFETIME", "ROLLING", "FIXED_PERIOD"]);
+export type WindowType = z.infer<typeof WindowTypeSchema>;
+
 export const LoyaltyProgramSchema = z.object({
   programName: z.string().min(2, "Program name must be at least 2 characters").max(100, "Program name must be at most 100 characters").trim(),
   requiredVisits: z.number().int().min(1, "Required visits must be at least 1").max(100, "Required visits must be at most 100").default(10),
+  windowType: WindowTypeSchema.default("LIFETIME"),
+  windowDays: z.number().int().min(1, "Window must be at least 1 day").max(3650, "Window must be at most 3650 days").nullable().optional(),
+  windowStartsAt: z.coerce.date().nullable().optional(),
   rewardTitle: z.string().min(2, "Reward title must be at least 2 characters").max(100, "Reward title must be at most 100 characters").trim(),
   rewardDescription: z.string().max(500, "Reward description must be at most 500 characters").trim().default(""),
   rewardValidityDays: z.number().int().min(1, "Validity must be at least 1 day").max(365, "Validity must be at most 365 days").default(30),
   verificationMethod: VerificationMethodSchema.default("VISIT_CONFIRMATION"),
   isActive: z.boolean().default(true),
+}).superRefine((data, ctx) => {
+  if (data.windowType === "ROLLING" && !data.windowDays) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Rolling window requires a number of days", path: ["windowDays"] });
+  }
+  if (data.windowType === "FIXED_PERIOD" && !data.windowStartsAt) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Fixed period requires a start date", path: ["windowStartsAt"] });
+  }
 });
 
 export const CampaignPrizeCreateSchema = z.object({

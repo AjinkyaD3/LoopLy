@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Map into a unified response
-    const memberships = customers.map(customer => {
+    const memberships = await Promise.all(customers.map(async customer => {
       const business = customer.business;
       const loyaltyProgram = business.loyaltyProgram;
 
@@ -44,13 +45,12 @@ export async function GET(request: NextRequest) {
       if (!loyaltyProgram) return null;
 
       const membership = customer.memberships.find(m => m.businessId === business.id);
+      if (!membership) return null;
 
-      const currentVisits = membership?.currentVisits || 0;
+      const eligibility = await computeThresholdEligibility(prisma, membership.id, loyaltyProgram);
       const requiredVisits = loyaltyProgram.requiredVisits;
-      const rewardAvailable = currentVisits >= requiredVisits;
 
       // Also check if there's an already-minted reward waiting to be claimed.
-      // A reward is minted when currentVisits >= requiredVisits and has a claimCode attached.
       const pendingReward = customer.rewards.find(r =>
         r.businessId === business.id &&
         r.loyaltyProgramId === loyaltyProgram.id &&
@@ -62,15 +62,15 @@ export async function GET(request: NextRequest) {
         businessName: business.name,
         programName: loyaltyProgram.programName,
         progress: {
-          currentVisits,
+          currentVisits: eligibility.qualifyingVisits,
           requiredVisits,
-          rewardAvailable: rewardAvailable || !!pendingReward,
+          rewardAvailable: eligibility.qualifies || !!pendingReward,
           rewardTitle: loyaltyProgram.rewardTitle
         }
       };
-    }).filter(Boolean);
+    }));
 
-    return NextResponse.json({ success: true, memberships }, { status: 200 });
+    return NextResponse.json({ success: true, memberships: memberships.filter(Boolean) }, { status: 200 });
 
   } catch (error: any) {
     console.error("Dashboard lookup error:", error);

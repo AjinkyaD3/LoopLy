@@ -20,6 +20,9 @@ export default function CreateLoyaltyProgramPage() {
 
   const [programName, setProgramName] = useState("");
   const [requiredVisits, setRequiredVisits] = useState(5);
+  const [windowType, setWindowType] = useState<"LIFETIME" | "ROLLING" | "FIXED_PERIOD">("LIFETIME");
+  const [windowDays, setWindowDays] = useState(90);
+  const [windowStartsAt, setWindowStartsAt] = useState("");
   const [rewardTitle, setRewardTitle] = useState("");
   const [rewardDescription, setRewardDescription] = useState("");
   const [rewardValidityDays, setRewardValidityDays] = useState(30);
@@ -50,6 +53,14 @@ export default function CreateLoyaltyProgramPage() {
       setError("Required visits must be between 1 and 100.");
       return;
     }
+    if (windowType === "ROLLING" && (!windowDays || windowDays < 1)) {
+      setError("Rolling window requires a number of days.");
+      return;
+    }
+    if (windowType === "FIXED_PERIOD" && !windowStartsAt) {
+      setError("Fixed period requires a start date.");
+      return;
+    }
 
     setLoading(true);
 
@@ -57,6 +68,9 @@ export default function CreateLoyaltyProgramPage() {
       const payload = {
         programName: programName.trim(),
         requiredVisits: Number(requiredVisits),
+        windowType,
+        windowDays: windowType === "ROLLING" ? Number(windowDays) : null,
+        windowStartsAt: windowType === "FIXED_PERIOD" ? new Date(windowStartsAt).toISOString() : null,
         rewardTitle: rewardTitle.trim(),
         rewardDescription: rewardDescription.trim(),
         rewardValidityDays: Number(rewardValidityDays),
@@ -186,6 +200,67 @@ export default function CreateLoyaltyProgramPage() {
                       <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-medium">days</span>
                     </div>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-slate-800">
+                    How should the {requiredVisits}-visit threshold be counted?
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["LIFETIME", "ROLLING", "FIXED_PERIOD"] as const).map((wt) => (
+                      <button
+                        key={wt}
+                        type="button"
+                        onClick={() => setWindowType(wt)}
+                        className={`p-2.5 rounded-xl border text-[11px] font-semibold transition-colors ${
+                          windowType === wt
+                            ? "bg-indigo-50 border-indigo-300 text-indigo-700 ring-1 ring-indigo-200"
+                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {wt === "LIFETIME" ? "Lifetime" : wt === "ROLLING" ? "Rolling Window" : "Fixed Period"}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    {windowType === "LIFETIME" && "Counts all approved visits ever, repeating every time the threshold is hit again."}
+                    {windowType === "ROLLING" && "Counts visits within a trailing number of days — e.g. \"10 visits in the last 90 days.\""}
+                    {windowType === "FIXED_PERIOD" && "Counts visits since a specific date you choose."}
+                  </p>
+
+                  {windowType === "ROLLING" && (
+                    <div>
+                      <label htmlFor="window-days" className="block text-xs font-semibold text-slate-800 mb-1">
+                        Rolling Window (Days) <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        id="window-days"
+                        type="number"
+                        min={1}
+                        max={3650}
+                        required
+                        value={windowDays}
+                        onChange={(e) => setWindowDays(parseInt(e.target.value, 10) || 1)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                  )}
+
+                  {windowType === "FIXED_PERIOD" && (
+                    <div>
+                      <label htmlFor="window-starts-at" className="block text-xs font-semibold text-slate-800 mb-1">
+                        Counting Since <span className="text-rose-500">*</span>
+                      </label>
+                      <input
+                        id="window-starts-at"
+                        type="date"
+                        required
+                        value={windowStartsAt}
+                        onChange={(e) => setWindowStartsAt(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>

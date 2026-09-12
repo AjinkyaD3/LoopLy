@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireBusinessOwner } from "@/lib/auth";
+import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const requiredVisits = business.loyaltyProgram.requiredVisits;
 
-    const formattedMembers = memberships.map((m) => {
+    const formattedMembers = await Promise.all(memberships.map(async (m) => {
       const activeRewards = m.rewards.filter(
         (r) => r.status === "AVAILABLE" && r.expiresAt > now
       );
@@ -82,13 +83,15 @@ export async function GET(request: NextRequest) {
       const redeemedRewardsCount = m.rewards.filter((r) => r.status === "REDEEMED").length;
       const lastVisitAt = m.visits[0]?.visitedAt ?? null;
 
+      const eligibility = await computeThresholdEligibility(prisma, m.id, business.loyaltyProgram!);
+
       return {
         id: m.id,
         customerId: m.customer.id,
         name: m.customer.name,
         mobileNumber: m.customer.mobileNumber,
         joinedAt: m.joinedAt,
-        currentVisits: m.currentVisits,
+        currentVisits: eligibility.qualifyingVisits,
         totalVisits: m.totalVisits,
         requiredVisits,
         activeRewardsCount: activeRewards.length,
@@ -96,7 +99,7 @@ export async function GET(request: NextRequest) {
         redeemedRewardsCount,
         lastVisitAt,
       };
-    });
+    }));
 
     return NextResponse.json({
       members: formattedMembers,

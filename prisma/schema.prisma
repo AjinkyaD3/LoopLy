@@ -40,6 +40,12 @@ enum RewardType {
   SCRATCH_CARD
 }
 
+enum WindowType {
+  LIFETIME
+  ROLLING
+  FIXED_PERIOD
+}
+
 // -----------------------------------------------------------------------------
 // USER & AUTH
 // -----------------------------------------------------------------------------
@@ -154,6 +160,13 @@ model LoyaltyProgram {
   business           Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
   programName        String
   requiredVisits     Int                @default(10)
+  // How the requiredVisits threshold is counted:
+  //   LIFETIME     — all approved visits ever (existing behavior)
+  //   ROLLING      — visits within the trailing windowDays, re-anchored after each reward
+  //   FIXED_PERIOD — visits since windowStartsAt
+  windowType         WindowType         @default(LIFETIME)
+  windowDays         Int?               // required (Zod-enforced) when windowType == ROLLING
+  windowStartsAt     DateTime?          // required (Zod-enforced) when windowType == FIXED_PERIOD
   rewardTitle        String
   rewardDescription  String
   rewardValidityDays Int                @default(30)
@@ -260,7 +273,10 @@ model Membership {
   customer      Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   businessId    String
   business      Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  currentVisits Int      @default(0) // Progress towards current reward threshold
+  // currentVisits removed — a resettable running counter cannot represent a rolling or
+  // fixed-period window. Progress is now always computed from Visit rows at read time
+  // (see src/lib/loyaltyProgress.ts). totalVisits is safe to keep stored: it is a pure
+  // lifetime tally with no window semantics, so it never needs to "reset" or go stale.
   totalVisits   Int      @default(0) // Lifetime verified visits count
   reviewPromptedAt DateTime?
   joinedAt      DateTime @default(now())
@@ -322,10 +338,15 @@ model Visit {
   verificationRequest   VisitRequest?        @relation(fields: [verificationRequestId], references: [id], onDelete: SetNull)
   visitedAt             DateTime             @default(now())
 
+  thresholdCompletionFor Reward[]            @relation("ThresholdCompletingVisit")
+
   @@index([membershipId])
   @@index([businessId])
   @@index([customerId])
   @@index([visitedAt])
+  // Composite: efficient "visits for this membership since <date>" range scans, used by
+  // both threshold-eligibility computation and the read-only progress endpoints.
+  @@index([membershipId, visitedAt])
 }
 
 // -----------------------------------------------------------------------------
@@ -351,6 +372,17 @@ model Reward {
   scratchCardPrize   ScratchCardPrize? @relation(fields: [scratchCardPrizeId], references: [id], onDelete: SetNull)
   isScratched        Boolean           @default(false)
   revealedPrize      String?
+  // Which ordinal threshold-crossing this reward represents (1, 2, 3, ...) for a given
+  // membership+program — null for non-threshold reward rows (including every historical
+  // SCRATCH_CARD row). The unique constraint below is the DB-level guarantee that the same
+  // cycle can never be minted twice for one membership+program, regardless of application
+  // bugs or concurrent approval attempts.
+  thresholdCycle     Int?
+  // The specific Visit whose approval completed this threshold cycle — used as the anchor
+  // for the next cycle's window start in ROLLING mode. Null on backfilled historical rows,
+  // where no such link was ever tracked.
+  thresholdVisitId   String?
+  thresholdVisit     Visit?            @relation("ThresholdCompletingVisit", fields: [thresholdVisitId], references: [id], onDelete: SetNull)
   expiresAt        DateTime
   redeemedAt       DateTime?
   redeemedByUserId String?
@@ -362,4 +394,7 @@ model Reward {
   @@index([businessId])
   @@index([customerId])
   @@index([status])
+  // NULL-safe: Postgres allows multiple NULLs, so this only constrains actual
+  // threshold-triggered rewards, never colliding with non-threshold reward rows.
+  @@unique([membershipId, loyaltyProgramId, thresholdCycle])
 }

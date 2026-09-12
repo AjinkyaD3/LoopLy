@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireBusinessOwner } from "@/lib/auth";
 import { getBillViewUrl } from "@/lib/storage";
+import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,10 @@ export async function GET(request: Request) {
 
     const business = await prisma.business.findUnique({
       where: { ownerId: user.id },
+      include: { loyaltyProgram: true },
     });
 
-    if (!business) {
+    if (!business || !business.loyaltyProgram) {
       return NextResponse.json({ error: "No business found for this owner." }, { status: 404 });
     }
 
@@ -37,7 +39,7 @@ export async function GET(request: Request) {
       },
       include: {
         customer: { select: { id: true, name: true, mobileNumber: true } },
-        membership: { select: { id: true, currentVisits: true, totalVisits: true } },
+        membership: { select: { id: true, totalVisits: true } },
         visit: { select: { id: true, visitedAt: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -46,8 +48,10 @@ export async function GET(request: Request) {
     const enrichedRequests = await Promise.all(
       requests.map(async (r) => {
         const signedBillUrl = r.billImagePath ? await getBillViewUrl(r.billImagePath) : null;
+        const eligibility = await computeThresholdEligibility(prisma, r.membership.id, business.loyaltyProgram!);
         return {
           ...r,
+          membership: { ...r.membership, currentVisits: eligibility.qualifyingVisits },
           signedBillUrl,
         };
       })

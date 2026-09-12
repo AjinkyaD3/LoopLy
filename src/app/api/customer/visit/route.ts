@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
       create: {
         customerId: customer.id,
         businessId,
-        currentVisits: 0,
         totalVisits: 0,
       },
     });

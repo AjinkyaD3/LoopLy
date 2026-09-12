@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { computeThresholdEligibility } from "@/lib/loyaltyProgress";
 
 export const dynamic = "force-dynamic";
 
@@ -48,17 +49,17 @@ export async function GET(request: NextRequest) {
 
     const membership = customer.memberships[0];
 
-    // Compute progress: derived from approved visit requests or use stored counter
-    // For now we use the stored counter `currentVisits` which should be incremented on approval.
-    const eligibleForReward = membership.currentVisits >= business.loyaltyProgram.requiredVisits;
+    const eligibility = await computeThresholdEligibility(prisma, membership.id, business.loyaltyProgram);
 
     return NextResponse.json({
       exists: true,
       name: customer.name,
+      membershipId: membership.id,
+      reviewPromptedAt: membership.reviewPromptedAt,
       totalVisits: membership.totalVisits,
-      currentVisits: membership.currentVisits,
+      currentVisits: eligibility.qualifyingVisits,
       requiredVisits: business.loyaltyProgram.requiredVisits,
-      eligibleForReward,
+      eligibleForReward: eligibility.qualifies,
     }, { status: 200 });
 
   } catch (error) {
