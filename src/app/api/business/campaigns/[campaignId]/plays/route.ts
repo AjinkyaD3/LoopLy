@@ -33,7 +33,10 @@ export async function GET(
     }
 
     const plays = await prisma.campaignPlay.findMany({
-      where: { campaignId: campaign.id },
+      where: { 
+        campaignId: campaign.id,
+        wonPrizeId: { not: null }
+      },
       orderBy: { playedAt: "desc" },
     });
 
