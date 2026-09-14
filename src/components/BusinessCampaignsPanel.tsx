@@ -50,7 +50,7 @@ interface CampaignItem {
 }
 
 const STATUS_STYLES: Record<CampaignItem["status"], string> = {
-  SCHEDULED: "bg-indigo-50 text-indigo-700",
+  SCHEDULED: "bg-primary-50 text-primary-700",
   ACTIVE: "bg-emerald-50 text-emerald-700",
   ENDED: "bg-slate-100 text-slate-600",
 };
@@ -161,7 +161,7 @@ export default function BusinessCampaignsPanel() {
         <div className="flex items-center gap-2 shrink-0">
           <Link
             href="/business/campaigns/create"
-            className="py-2 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 whitespace-nowrap"
+            className="py-2 px-3.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5 whitespace-nowrap"
           >
             <Plus className="w-3.5 h-3.5" />
             New Campaign
@@ -179,10 +179,10 @@ export default function BusinessCampaignsPanel() {
 
       {loading && campaigns.length === 0 ? (
         <div className="flex items-center justify-center py-16 text-slate-400 text-xs gap-2">
-          <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> Loading campaigns…
+          <Loader2 className="w-4 h-4 animate-spin text-primary-600" /> Loading campaigns…
         </div>
       ) : campaigns.length === 0 ? (
-        <div className="py-12 bg-white rounded-2xl border border-slate-200 text-center space-y-2 p-6 shadow-xs">
+        <div className="py-12 bg-white rounded-2xl border border-slate-200 text-center space-y-2 p-6 shadow-sm">
           <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
             <Sparkles className="w-5 h-5" />
           </div>
@@ -197,7 +197,7 @@ export default function BusinessCampaignsPanel() {
           {campaigns.map((c) => {
             const StatusIcon = STATUS_ICON[c.status];
             return (
-              <div key={c.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+              <div key={c.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h4 className="text-sm font-bold text-slate-900">{c.name}</h4>
@@ -207,18 +207,18 @@ export default function BusinessCampaignsPanel() {
                     </span>
                   </div>
                   <div
-                    className="w-16 h-16 bg-white p-1 rounded-lg border border-slate-200 shrink-0"
+                    className="w-16 h-16 bg-white p-1 rounded-xl border border-slate-200 shrink-0"
                     dangerouslySetInnerHTML={{ __html: c.qrSvg }}
                   />
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex items-center gap-1.5 cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => loadPlays(c.id)}>
+                  <div className="flex items-center gap-1.5 cursor-pointer hover:text-primary-600 transition-colors" onClick={() => loadPlays(c.id)}>
                     <Users className="w-3.5 h-3.5" />
                     {c.playsCount} {c.playsCount === 1 ? "play" : "plays"} (View)
                   </div>
                   {c.status === "ACTIVE" && editingId !== c.id && (
-                    <button onClick={() => startEditing(c)} className="text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
+                    <button onClick={() => startEditing(c)} className="text-primary-600 hover:text-primary-800 font-semibold flex items-center gap-1">
                       <Edit2 className="w-3 h-3" /> Edit Prizes
                     </button>
                   )}
@@ -264,7 +264,7 @@ export default function BusinessCampaignsPanel() {
                         <button
                           onClick={() => saveEditing(c)}
                           disabled={savingEdit}
-                          className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold flex items-center justify-center gap-1 disabled:opacity-50"
+                          className="flex-1 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold flex items-center justify-center gap-1 disabled:opacity-50"
                         >
                           {savingEdit ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                           Save
@@ -272,7 +272,7 @@ export default function BusinessCampaignsPanel() {
                         <button
                           onClick={() => setEditingId(null)}
                           disabled={savingEdit}
-                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-semibold"
+                          className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold"
                         >
                           Cancel
                         </button>
@@ -316,13 +316,13 @@ export default function BusinessCampaignsPanel() {
           <div className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col shadow-xl">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h3 className="font-bold text-slate-900">Campaign Plays</h3>
-              <button onClick={() => setViewPlaysId(null)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
+              <button onClick={() => setViewPlaysId(null)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4 overflow-y-auto flex-1">
               {loadingPlays ? (
-                <div className="flex justify-center py-8 text-indigo-600">
+                <div className="flex justify-center py-8 text-primary-600">
                   <Loader2 className="w-6 h-6 animate-spin" />
                 </div>
               ) : plays.length === 0 ? (
@@ -337,7 +337,7 @@ export default function BusinessCampaignsPanel() {
                         <p className="text-sm font-bold text-slate-900">{p.customerName || "Guest"}</p>
                         <p className="text-xs text-slate-500">{p.mobileNumber}</p>
                         <div className="flex items-center gap-1 mt-1 text-xs font-medium text-slate-700">
-                          <Gift className="w-3 h-3 text-indigo-500" />
+                          <Gift className="w-3 h-3 text-primary-500" />
                           {p.revealedPrize}
                         </div>
                       </div>

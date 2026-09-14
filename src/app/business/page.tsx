@@ -61,21 +61,21 @@ export default async function BusinessDashboardPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-sm">
                 <Sparkles className="w-4 h-4" />
               </div>
-              <span className="text-lg font-black tracking-tight text-slate-900">
+              <span className="font-display text-lg font-black tracking-tight text-slate-900">
                 Looply
               </span>
             </Link>
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-primary-50 text-primary-700 text-[10px] font-bold">
               Business Owner Hub
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <div className="hidden md:flex flex-col text-right text-xs">
-              <Link href="/business/settings" className="font-bold text-slate-900 hover:text-indigo-600 transition-colors">
+              <Link href="/business/settings" className="font-bold text-slate-900 hover:text-primary-600 transition-colors">
                 {user.name}
               </Link>
               <span className="text-[10px] text-slate-400">{user.email}</span>
@@ -89,13 +89,13 @@ export default async function BusinessDashboardPage() {
       <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         {/* STATE 1: Unconfigured Owner Onboarding */}
         {!business && (
-          <div className="max-w-md mx-auto my-12 p-8 rounded-3xl bg-white border border-slate-200 shadow-sm text-center space-y-5">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-md">
+          <div className="max-w-md mx-auto my-12 p-8 rounded-2xl bg-white border border-slate-200 shadow-sm text-center space-y-5">
+            <div className="w-14 h-14 rounded-2xl bg-primary-600 text-white flex items-center justify-center mx-auto shadow-md">
               <Store className="w-7 h-7" />
             </div>
 
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
                 Welcome to Looply!
               </h1>
               <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
@@ -106,7 +106,7 @@ export default async function BusinessDashboardPage() {
             <div className="pt-2">
               <Link
                 href="/business/setup"
-                className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-sm rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2"
               >
                 Set Up My Business
                 <ArrowRight className="w-4 h-4" />
@@ -114,7 +114,7 @@ export default async function BusinessDashboardPage() {
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-xs text-slate-400">
-              <Clock className="w-3.5 h-3.5 text-indigo-600" />
+              <Clock className="w-3.5 h-3.5 text-primary-600" />
               <span>Takes under 60 seconds to configure</span>
             </div>
           </div>
@@ -126,7 +126,7 @@ export default async function BusinessDashboardPage() {
             {/* Owner Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200/80">
               <div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                   {business.name}
                 </h1>
                 <p className="text-xs text-slate-500 mt-1">
@@ -157,7 +157,7 @@ export default async function BusinessDashboardPage() {
             {/* Loyalty Program Section */}
             {business.loyaltyPrograms.length === 0 ? (
               <div className="p-8 rounded-2xl bg-white border border-slate-200 border-dashed text-center space-y-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center mx-auto">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
@@ -168,7 +168,7 @@ export default async function BusinessDashboardPage() {
                 </div>
                 <Link
                   href="/business/loyalty/create"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-xs transition-colors"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm rounded-xl shadow-sm transition-colors"
                 >
                   Start a Loyalty Program
                   <ArrowRight className="w-4 h-4" />

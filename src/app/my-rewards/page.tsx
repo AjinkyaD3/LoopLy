@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Smartphone, Loader2, Award, Gift, CheckCircle2, Ticket, Clock, Check } from "lucide-react";
+import { Sparkles, Smartphone, Gift, CheckCircle2, Ticket, Clock, Check } from "lucide-react";
+import Button from "@/components/ui/Button";
+import EmptyState from "@/components/ui/EmptyState";
 
 type RewardData = {
   title: string;
@@ -82,10 +84,10 @@ export default function MyRewardsPage() {
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-sm">
               <Sparkles className="w-4 h-4" />
             </div>
-            <span className="text-xl font-black tracking-tight">Looply</span>
+            <span className="font-display text-xl font-black tracking-tight">Looply</span>
           </div>
         </div>
       </header>
@@ -99,53 +101,47 @@ export default function MyRewardsPage() {
         <form onSubmit={handleSearch} className="mb-8 space-y-4">
           <div>
             <div className="relative">
-              <Smartphone className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+              <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 type="tel"
                 required
                 value={mobileNumber}
                 onChange={(e) => setMobileNumber(e.target.value)}
                 placeholder="Enter your mobile number"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none shadow-xs"
+                className="w-full pl-11 pr-4 py-3.5 text-base rounded-xl border border-slate-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
           </div>
-          
+
           {error && <p className="text-rose-600 text-xs font-semibold text-center">{error}</p>}
-          
-          <button
-            type="submit"
-            disabled={loading || mobileNumber.length < 5}
-            className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "View My Cards"}
-          </button>
+
+          <Button type="submit" loading={loading} disabled={mobileNumber.length < 5} size="lg" fullWidth>
+            {loading ? "Loading..." : "View My Cards"}
+          </Button>
         </form>
 
         {hasSearched && cards !== null && (
           <div className="space-y-4">
             {cards.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-xs text-center">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                  <Gift className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-bold mb-1">No Cards Found</h3>
-                <p className="text-sm text-slate-500">We couldn&apos;t find any loyalty programs linked to this number.</p>
-              </div>
+              <EmptyState
+                icon={Gift}
+                title="No Cards Found"
+                message="We couldn't find any loyalty programs linked to this number."
+              />
             ) : (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Your Loyalty Cards</h2>
                 
                 {cards.map((card, idx) => (
-                  <div key={idx} className={`bg-white rounded-2xl border shadow-xs overflow-hidden ${card.isActive ? 'border-indigo-200 shadow-indigo-100/50' : 'border-slate-200 opacity-80'}`}>
+                  <div key={idx} className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${card.isActive ? 'border-primary-200 shadow-primary-100/50' : 'border-slate-200 opacity-80'}`}>
                     {/* Card Header */}
                     <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                       <div>
                         <h3 className="font-bold text-slate-900">{card.businessName}</h3>
                         <p className="text-xs text-slate-500">{card.programName}</p>
                       </div>
-                      <div className={`p-2 rounded-lg border shadow-xs ${card.isActive ? 'bg-indigo-50 border-indigo-100' : 'bg-white border-slate-100'}`}>
-                        {card.isActive ? <Ticket className="w-5 h-5 text-indigo-600" /> : <Clock className="w-5 h-5 text-slate-400" />}
+                      <div className={`p-2 rounded-xl border shadow-sm ${card.isActive ? 'bg-primary-50 border-primary-100' : 'bg-white border-slate-100'}`}>
+                        {card.isActive ? <Ticket className="w-5 h-5 text-primary-600" /> : <Clock className="w-5 h-5 text-slate-400" />}
                       </div>
                     </div>
 
@@ -153,7 +149,7 @@ export default function MyRewardsPage() {
                     <div className="px-5 py-6 bg-slate-50">
                       <div className="flex justify-between items-end mb-4">
                         <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Loyalty Card</span>
-                        <span className="text-sm font-bold text-indigo-600">
+                        <span className="text-sm font-bold text-primary-600">
                           {card.progress.currentStamps} / {card.progress.requiredStamps} collected
                         </span>
                       </div>
@@ -168,7 +164,7 @@ export default function MyRewardsPage() {
                               key={i} 
                               className={`aspect-square rounded-full border-2 flex items-center justify-center transition-all ${
                                 isCollected 
-                                  ? 'bg-indigo-100 border-indigo-600 text-indigo-600' 
+                                  ? 'bg-primary-100 border-primary-600 text-primary-600' 
                                   : 'bg-white border-dashed border-slate-300 text-slate-300'
                               }`}
                             >
@@ -224,7 +220,7 @@ export default function MyRewardsPage() {
                         )}
                         
                         {!card.isActive && (
-                          <p className="text-xs text-amber-600 font-medium text-center bg-amber-50 py-1.5 rounded-lg border border-amber-100">
+                          <p className="text-xs text-amber-600 font-medium text-center bg-amber-50 py-1.5 rounded-xl border border-amber-100">
                             This program has ended.
                           </p>
                         )}
@@ -240,14 +236,14 @@ export default function MyRewardsPage() {
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Campaign Prizes</h2>
                 <div className="space-y-4">
                   {campaigns.map((c, idx) => (
-                    <div key={idx} className={`p-5 rounded-2xl border shadow-xs flex flex-col gap-3 ${c.status === 'REDEEMED' ? 'bg-slate-50 border-slate-200 opacity-80' : 'bg-white border-indigo-200 shadow-indigo-100/50'}`}>
+                    <div key={idx} className={`p-5 rounded-2xl border shadow-sm flex flex-col gap-3 ${c.status === 'REDEEMED' ? 'bg-slate-50 border-slate-200 opacity-80' : 'bg-white border-primary-200 shadow-primary-100/50'}`}>
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-bold text-slate-900">{c.businessName}</h3>
                           <p className="text-xs text-slate-500">{c.campaignName}</p>
                         </div>
-                        <div className={`p-2 rounded-lg border shadow-xs ${c.status === 'REDEEMED' ? 'bg-slate-100 border-slate-200' : 'bg-indigo-50 border-indigo-100'}`}>
-                          {c.status === 'REDEEMED' ? <CheckCircle2 className="w-5 h-5 text-slate-400" /> : <Gift className="w-5 h-5 text-indigo-600" />}
+                        <div className={`p-2 rounded-xl border shadow-sm ${c.status === 'REDEEMED' ? 'bg-slate-100 border-slate-200' : 'bg-primary-50 border-primary-100'}`}>
+                          {c.status === 'REDEEMED' ? <CheckCircle2 className="w-5 h-5 text-slate-400" /> : <Gift className="w-5 h-5 text-primary-600" />}
                         </div>
                       </div>
                       

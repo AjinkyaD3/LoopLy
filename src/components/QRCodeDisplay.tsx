@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy, Download, QrCode, ShieldCheck } from "lucide-react";
+import Button from "@/components/ui/Button";
 
 interface QRCodeDisplayProps {
   businessName: string;
@@ -38,7 +39,7 @@ export default function QRCodeDisplay({
       {/* Printable Counter Stand Card */}
       <div className="p-6 bg-white rounded-2xl border-2 border-slate-900 shadow-sm flex flex-col items-center text-center">
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-[11px] font-bold uppercase tracking-wider mb-3">
-          <QrCode className="w-3.5 h-3.5 text-indigo-600" />
+          <QrCode className="w-3.5 h-3.5 text-primary-600" />
           Permanent Counter QR
         </div>
         <h3 className="text-xl font-bold text-slate-900">{businessName}</h3>
@@ -80,11 +81,7 @@ export default function QRCodeDisplay({
 
       {/* Action Buttons */}
       <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="w-full py-2.5 px-3 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200 shadow-sm transition-colors flex items-center justify-center gap-2"
-        >
+        <Button type="button" variant="secondary" onClick={handleCopy}>
           {copied ? (
             <>
               <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -96,16 +93,12 @@ export default function QRCodeDisplay({
               Copy Link
             </>
           )}
-        </button>
+        </Button>
 
-        <button
-          type="button"
-          onClick={handleDownload}
-          className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2"
-        >
+        <Button type="button" onClick={handleDownload}>
           <Download className="w-3.5 h-3.5" />
           Download QR
-        </button>
+        </Button>
       </div>
     </div>
   );

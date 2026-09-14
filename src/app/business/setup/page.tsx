@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 
 import BusinessSetupForm from "@/components/BusinessSetupForm";
 import { ArrowLeft, CheckCircle2, Store, Sparkles } from "lucide-react";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -34,30 +36,27 @@ export default async function BusinessSetupPage() {
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
               Business Setup
             </h1>
           </header>
 
-          <div className="my-8 p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
+          <Card className="my-8 space-y-3 border-emerald-200 bg-emerald-50 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h2 className="text-base font-bold text-emerald-950">
               Your business is already configured
             </h2>
-            <p className="text-xs text-emerald-800 leading-relaxed max-w-xs mx-auto">
+            <p className="mx-auto max-w-xs text-xs leading-relaxed text-emerald-800">
               You have already set up <strong>{existingBusiness.name}</strong>. Each business owner account is linked to one business in V1.
             </p>
             <div className="pt-2">
-              <Link
-                href="/business"
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors"
-              >
-                Go to Dashboard
+              <Link href="/business">
+                <Button size="sm">Go to Dashboard</Button>
               </Link>
             </div>
-          </div>
+          </Card>
         </div>
 
         <footer className="pt-6 pb-2 text-center text-xs text-slate-400">
@@ -81,18 +80,18 @@ export default async function BusinessSetupPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-xs font-semibold mb-2">
                 <Sparkles className="w-3.5 h-3.5" />
                 Initial Setup
               </div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
                 Set Up Your Business
               </h1>
               <p className="mt-1 text-xs text-slate-500">
                 Configure your business and loyalty program in under 60 seconds.
               </p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-primary-50 border border-primary-100 text-primary-600 flex items-center justify-center shadow-sm">
               <Store className="w-5 h-5" />
             </div>
           </div>

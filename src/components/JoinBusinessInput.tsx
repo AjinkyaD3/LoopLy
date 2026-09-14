@@ -38,9 +38,9 @@ export default function JoinBusinessInput() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <div className="w-7 h-7 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
           <QrCode className="w-4 h-4" />
         </div>
         <div>
@@ -58,12 +58,12 @@ export default function JoinBusinessInput() {
             setError(null);
           }}
           placeholder="e.g. paste join link or business token..."
-          className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+          className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
         />
         <button
           type="submit"
           disabled={loading || !tokenInput.trim()}
-          className="py-2 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
+          className="py-2 px-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 whitespace-nowrap"
         >
           {loading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -36,7 +36,7 @@ export default async function BusinessQRPage() {
               <ArrowLeft className="w-3.5 h-3.5" />
               Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
               Business QR Code
             </h1>
           </header>
@@ -54,7 +54,7 @@ export default async function BusinessQRPage() {
             <div className="pt-2">
               <Link
                 href="/business"
-                className="inline-flex items-center justify-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors"
+                className="inline-flex items-center justify-center px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors"
               >
                 Go to Business Setup
               </Link>
@@ -90,14 +90,14 @@ export default async function BusinessQRPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">
                 Business QR Code
               </h1>
               <p className="mt-1 text-xs text-slate-500">
                 One permanent code for customer discovery and onboarding.
               </p>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-primary-50 border border-primary-100 text-primary-700 flex items-center justify-center">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>

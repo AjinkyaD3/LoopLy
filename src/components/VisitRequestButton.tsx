@@ -46,7 +46,7 @@ export default function BillPhotoInput({ file, onFileSelect }: BillPhotoInputPro
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          className="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+          className="block w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 cursor-pointer"
           onChange={handleChange}
         />
       </label>

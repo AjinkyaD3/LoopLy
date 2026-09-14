@@ -28,22 +28,22 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-sm">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <span className="text-xl font-black tracking-tight text-slate-900">
+              <span className="font-display text-xl font-black tracking-tight text-slate-900">
                 Looply
               </span>
             </Link>
 
             <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-slate-600">
-              <a href="#how-it-works" className="hover:text-indigo-600 transition-colors">
+              <a href="#how-it-works" className="hover:text-primary-600 transition-colors">
                 How It Works
               </a>
-              <a href="#for-businesses" className="hover:text-indigo-600 transition-colors">
+              <a href="#for-businesses" className="hover:text-primary-600 transition-colors">
                 For Businesses
               </a>
-              <a href="#pricing" className="hover:text-indigo-600 transition-colors">
+              <a href="#pricing" className="hover:text-primary-600 transition-colors">
                 Pricing
               </a>
             </nav>
@@ -53,7 +53,7 @@ export default async function Home() {
             {user ? (
               <Link
                 href="/business"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
               >
                 Go to Dashboard
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -68,7 +68,7 @@ export default async function Home() {
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors"
                 >
                   Get Started
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -85,14 +85,14 @@ export default async function Home() {
           <div className="grid lg:grid-cols-12 gap-12 items-center">
             {/* Left Copy */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold shadow-xs">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-xs font-semibold shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-primary-600" />
                 <span>Next-Gen Loyalty for Small Businesses</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.12]">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.12]">
                 Turn every visit into a reason to{" "}
-                <span className="text-indigo-600">come back.</span>
+                <span className="text-primary-600">come back.</span>
               </h1>
 
               <p className="text-base sm:text-lg text-slate-600 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
@@ -104,7 +104,7 @@ export default async function Home() {
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                 <Link
                   href="/register"
-                  className="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-3.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
                 >
                   Start Your Business Program
                   <ArrowRight className="w-4 h-4" />
@@ -136,10 +136,10 @@ export default async function Home() {
 
             {/* Right Card / Visual Flow Demonstration */}
             <div className="lg:col-span-5 flex justify-center">
-              <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-xl border border-slate-200/80 space-y-4">
+              <div className="w-full max-w-md bg-white rounded-2xl p-6 shadow-xl border border-slate-200/80 space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
                       <Store className="w-4 h-4" />
                     </div>
                     <div>
@@ -156,12 +156,12 @@ export default async function Home() {
 
                 {/* Counter Stand Simulation */}
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center space-y-2">
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-200/60 text-[10px] font-bold text-slate-700">
-                    <QrCode className="w-3 h-3 text-indigo-600" />
+                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xl bg-slate-200/60 text-[10px] font-bold text-slate-700">
+                    <QrCode className="w-3 h-3 text-primary-600" />
                     Permanent Counter QR
                   </div>
-                  <div className="w-36 h-36 mx-auto bg-white rounded-xl border border-slate-200 p-2 flex items-center justify-center shadow-xs">
-                    <div className="w-full h-full bg-slate-900 rounded-lg p-3 text-white flex flex-col items-center justify-center">
+                  <div className="w-36 h-36 mx-auto bg-white rounded-xl border border-slate-200 p-2 flex items-center justify-center shadow-sm">
+                    <div className="w-full h-full bg-slate-900 rounded-xl p-3 text-white flex flex-col items-center justify-center">
                       <QrCode className="w-16 h-16 text-white" />
                       <span className="text-[9px] font-mono mt-1 text-slate-300">Scan to Join</span>
                     </div>
@@ -172,16 +172,16 @@ export default async function Home() {
                 </div>
 
                 {/* Progress preview */}
-                <div className="p-3.5 rounded-xl bg-indigo-50/60 border border-indigo-100 space-y-1.5">
+                <div className="p-3.5 rounded-xl bg-primary-50/60 border border-primary-100 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-slate-800 flex items-center gap-1">
-                      <Award className="w-3.5 h-3.5 text-indigo-600" />
+                      <Award className="w-3.5 h-3.5 text-primary-600" />
                       Reward: Free Coffee & Pastry
                     </span>
-                    <span className="font-bold text-indigo-700">4 / 5 visits</span>
+                    <span className="font-bold text-primary-700">4 / 5 visits</span>
                   </div>
-                  <div className="w-full h-2 bg-indigo-200/60 rounded-full overflow-hidden">
-                    <div className="w-4/5 h-full bg-indigo-600 rounded-full" />
+                  <div className="w-full h-2 bg-primary-200/60 rounded-full overflow-hidden">
+                    <div className="w-4/5 h-full bg-primary-600 rounded-full" />
                   </div>
                 </div>
               </div>
@@ -194,10 +194,10 @@ export default async function Home() {
       <section id="how-it-works" className="py-16 bg-white border-y border-slate-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary-600">
               Frictionless Architecture
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               How Looply Works
             </h2>
             <p className="text-sm text-slate-600">
@@ -208,7 +208,7 @@ export default async function Home() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Step 1 */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
                 1
               </div>
               <h3 className="font-bold text-base text-slate-900">Permanent QR</h3>
@@ -219,7 +219,7 @@ export default async function Home() {
 
             {/* Step 2 */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
                 2
               </div>
               <h3 className="font-bold text-base text-slate-900">Customer Scans</h3>
@@ -230,7 +230,7 @@ export default async function Home() {
 
             {/* Step 3 */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
                 3
               </div>
               <h3 className="font-bold text-base text-slate-900">Visit Verified</h3>
@@ -241,7 +241,7 @@ export default async function Home() {
 
             {/* Step 4 */}
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-primary-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
                 4
               </div>
               <h3 className="font-bold text-base text-slate-900">Automatic Reward</h3>
@@ -258,8 +258,8 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="grid md:grid-cols-2 gap-8">
             {/* For Business Owners */}
-            <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5">
+              <div className="w-12 h-12 rounded-2xl bg-primary-100 text-primary-700 flex items-center justify-center">
                 <Store className="w-6 h-6" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900">
@@ -289,7 +289,7 @@ export default async function Home() {
               <div className="pt-2">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-primary-600 hover:text-primary-800"
                 >
                   Create your business program →
                 </Link>
@@ -297,7 +297,7 @@ export default async function Home() {
             </div>
 
             {/* For Customers */}
-            <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
+            <div className="p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-5">
               <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
                 <HeartHandshake className="w-6 h-6" />
               </div>
@@ -342,10 +342,10 @@ export default async function Home() {
       <section id="pricing" className="py-20 bg-white border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center space-y-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+            <span className="text-xs font-bold uppercase tracking-wider text-primary-600">
               Clear & Transparent Pricing
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="font-display text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Invest in your regulars, not bloated software
             </h2>
             <p className="text-sm text-slate-600 max-w-lg mx-auto">
@@ -354,9 +354,9 @@ export default async function Home() {
           </div>
 
           {/* Pricing Card */}
-          <div className="relative max-w-lg mx-auto rounded-3xl bg-gradient-to-b from-indigo-50/70 via-white to-white border-2 border-indigo-600 p-8 shadow-xl space-y-6">
+          <div className="relative max-w-lg mx-auto rounded-2xl bg-gradient-to-b from-primary-50/70 via-white to-white border-2 border-primary-600 p-8 shadow-xl space-y-6">
             {/* Launch Offer Badge */}
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-indigo-600 text-white text-[11px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1.5">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary-600 text-white text-[11px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5" />
               New Launch Offer
             </div>
@@ -378,7 +378,7 @@ export default async function Home() {
                 </span>
                 <span className="text-xs text-slate-500 font-medium">/ year</span>
               </div>
-              <span className="inline-block text-[11px] font-bold text-indigo-700 bg-indigo-100/60 px-2.5 py-0.5 rounded-full">
+              <span className="inline-block text-[11px] font-bold text-primary-700 bg-primary-100/60 px-2.5 py-0.5 rounded-full">
                 Save ₹500 today with early launch pricing
               </span>
             </div>
@@ -413,7 +413,7 @@ export default async function Home() {
             <div className="pt-2">
               <Link
                 href="/register"
-                className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
               >
                 Claim Launch Offer & Get Started
                 <ArrowRight className="w-4 h-4" />
@@ -431,7 +431,7 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-white">
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-xl bg-primary-600 flex items-center justify-center">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold tracking-tight text-base">Looply</span>

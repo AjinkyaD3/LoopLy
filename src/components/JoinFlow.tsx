@@ -5,6 +5,8 @@ import { Award, CheckCircle2, Loader2, Smartphone, Check } from "lucide-react";
 import GoogleReviewModal from "./GoogleReviewModal";
 import InstagramButton from "./InstagramButton";
 import Link from "next/link";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
 
 interface JoinFlowProps {
   business: {
@@ -102,9 +104,9 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
     <div className="space-y-6 w-full">
       <form onSubmit={handleSubmitRequest} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Mobile Number</label>
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5">Mobile Number</label>
           <div className="relative">
-            <Smartphone className="absolute left-3 top-2.5 w-5 h-5 text-slate-400" />
+            <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="tel"
               required
@@ -112,7 +114,7 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
               onChange={(e) => setMobileNumber(e.target.value)}
               placeholder="Enter your number"
               disabled={!program.isActive}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none disabled:bg-slate-100 disabled:text-slate-400"
+              className="w-full pl-11 pr-4 py-3.5 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-slate-100 disabled:text-slate-400"
             />
           </div>
         </div>
@@ -124,7 +126,7 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
         )}
 
         {progress && !progress.isCompleted && program.isActive && (
-          <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-800">
+          <div className="p-3 bg-primary-50 border border-primary-100 rounded-xl text-xs text-primary-800">
             {progress.exists ? (
               <span>Welcome back! You have {progress.currentStamps} stamps on your loyalty card.</span>
             ) : (
@@ -153,16 +155,16 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
           </div>
         ) : progress?.isCompleted ? (
           <div className="space-y-4">
-            <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl text-center">
-              <Check className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
-              <h3 className="font-bold text-indigo-900">Program Completed!</h3>
-              <p className="text-indigo-700 text-xs mb-4">You have already completed this loyalty card program.</p>
+            <div className="p-4 bg-primary-50 border border-primary-200 rounded-xl text-center">
+              <Check className="w-8 h-8 text-primary-600 mx-auto mb-2" />
+              <h3 className="font-bold text-primary-900">Program Completed!</h3>
+              <p className="text-primary-700 text-xs mb-4">You have already completed this loyalty card program.</p>
 
               <div className="space-y-3">
-                <Link href="/my-rewards" className="w-full block py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-xs">
-                  View My Rewards
+                <Link href="/my-rewards" className="block">
+                  <Button size="lg" fullWidth>View My Rewards</Button>
                 </Link>
-                <p className="text-[11px] text-indigo-600 font-medium">
+                <p className="text-[11px] text-primary-600 font-medium">
                   Go to your rewards page to view your collected rewards and claim codes.
                 </p>
               </div>
@@ -170,28 +172,28 @@ export default function JoinFlow({ business, program }: JoinFlowProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Name (Optional)</label>
-              <input
-                type="text"
-                value={enteredName}
-                onChange={(e) => setEnteredName(e.target.value)}
-                placeholder="What should we call you?"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-600 outline-none"
-              />
-            </div>
+            <Input
+              type="text"
+              label="Name (Optional)"
+              value={enteredName}
+              onChange={(e) => setEnteredName(e.target.value)}
+              placeholder="What should we call you?"
+              className="py-3.5 text-base"
+            />
 
             {error && <p className="text-rose-600 text-xs font-semibold">{error}</p>}
             {success && <p className="text-emerald-600 text-xs font-semibold">{success}</p>}
 
             {!success && (
-              <button
+              <Button
                 type="submit"
-                disabled={loading || mobileNumber.length < 5}
-                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                loading={loading}
+                disabled={mobileNumber.length < 5}
+                size="lg"
+                fullWidth
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Request"}
-              </button>
+                Submit Request
+              </Button>
             )}
           </div>
         )}

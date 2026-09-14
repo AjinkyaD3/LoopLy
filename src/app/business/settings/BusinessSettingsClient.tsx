@@ -162,9 +162,9 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
           {bizError && <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">{bizError}</div>}
           {bizSuccess && <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">{bizSuccess}</div>}
 
-          <form onSubmit={handleSaveBusiness} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+          <form onSubmit={handleSaveBusiness} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 pb-2 border-b border-slate-100">
-              <Store className="w-3.5 h-3.5 text-indigo-600" /> Business Details
+              <Store className="w-3.5 h-3.5 text-primary-600" /> Business Details
             </div>
             
             <div className="space-y-4">
@@ -174,7 +174,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                   required
                 />
               </div>
@@ -193,7 +193,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                       setInstagramHandle(val);
                     }}
                     placeholder="looply_cafe"
-                    className="w-full pl-7 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                    className="w-full pl-7 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                   />
                 </div>
               </div>
@@ -207,7 +207,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                   value={googleReviewUrl}
                   onChange={(e) => setGoogleReviewUrl(e.target.value)}
                   placeholder="https://g.page/r/.../review"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                 />
               </div>
 
@@ -220,7 +220,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                   value={businessType}
                   onChange={(e) => setBusinessType(e.target.value)}
                   placeholder="e.g. Cafe, Salon"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                 />
               </div>
 
@@ -233,7 +233,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   placeholder="e.g. 123 Main St"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                 />
               </div>
 
@@ -251,7 +251,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                       setYoutubeHandle(val);
                     }}
                     placeholder="looply_channel"
-                    className="w-full pl-7 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                    className="w-full pl-7 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                   />
                 </div>
               </div>
@@ -261,14 +261,14 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
               <button
                 type="submit"
                 disabled={isSavingBiz}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 <Save className="w-4 h-4" /> {isSavingBiz ? "Saving..." : "Save Profile"}
               </button>
             </div>
           </form>
 
-          <div className="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl border border-rose-200 p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 pb-2 border-b border-rose-100">
               <AlertTriangle className="w-3.5 h-3.5" /> Danger Zone
             </div>
@@ -293,8 +293,8 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                 <div className="flex flex-col gap-2 p-3 bg-rose-50 border border-rose-200 rounded-xl">
                   <span className="text-xs font-bold text-rose-700">Are you absolutely sure?</span>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setShowBizDeleteConfirm(false)} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-lg">Cancel</button>
-                    <button onClick={handleDeleteBusiness} disabled={isDeletingBiz} className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 disabled:opacity-50">
+                    <button onClick={() => setShowBizDeleteConfirm(false)} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl">Cancel</button>
+                    <button onClick={handleDeleteBusiness} disabled={isDeletingBiz} className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 disabled:opacity-50">
                       <Trash2 className="w-3.5 h-3.5" /> {isDeletingBiz ? "Deleting..." : "Yes, Delete"}
                     </button>
                   </div>
@@ -315,9 +315,9 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
             {loyaltyError && <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">{loyaltyError}</div>}
             {loyaltySuccess && <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">{loyaltySuccess}</div>}
 
-            <form onSubmit={handleSaveLoyalty} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+            <form onSubmit={handleSaveLoyalty} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500 pb-2 border-b border-slate-100">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600" /> Reward Details
+                <Sparkles className="w-3.5 h-3.5 text-primary-600" /> Reward Details
               </div>
               
               <div className="space-y-4">
@@ -327,7 +327,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                     type="text"
                     value={loyalty.programName}
                     onChange={(e) => setLoyalty({ ...loyalty, programName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                     required
                   />
                 </div>
@@ -341,7 +341,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                       max={100}
                       value={loyalty.requiredVisits}
                       onChange={(e) => setLoyalty({ ...loyalty, requiredVisits: parseInt(e.target.value) || 1 })}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                       required
                     />
                   </div>
@@ -353,7 +353,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                       max={365}
                       value={loyalty.rewardValidityDays}
                       onChange={(e) => setLoyalty({ ...loyalty, rewardValidityDays: parseInt(e.target.value) || 30 })}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                       required
                     />
                   </div>
@@ -365,7 +365,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                     type="text"
                     value={loyalty.rewardTitle}
                     onChange={(e) => setLoyalty({ ...loyalty, rewardTitle: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors"
                     required
                   />
                 </div>
@@ -375,7 +375,7 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                   <textarea
                     value={loyalty.rewardDescription}
                     onChange={(e) => setLoyalty({ ...loyalty, rewardDescription: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors resize-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors resize-none"
                   />
                 </div>
               </div>
@@ -384,14 +384,14 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                 <button
                   type="submit"
                   disabled={isSavingLoyalty}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+                  className="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" /> {isSavingLoyalty ? "Saving..." : "Save Program"}
                 </button>
               </div>
             </form>
 
-            <div className="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs space-y-4">
+            <div className="bg-white rounded-2xl border border-rose-200 p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600 pb-2 border-b border-rose-100">
                 <AlertTriangle className="w-3.5 h-3.5" /> Danger Zone
               </div>
@@ -416,8 +416,8 @@ export default function BusinessSettingsClient({ business }: BusinessSettingsPro
                   <div className="flex flex-col gap-2 p-3 bg-rose-50 border border-rose-200 rounded-xl">
                     <span className="text-xs font-bold text-rose-700">Wipe all memberships?</span>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setShowLoyaltyDeleteConfirm(false)} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-lg">Cancel</button>
-                      <button onClick={handleDeleteLoyalty} disabled={isDeletingLoyalty} className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 disabled:opacity-50">
+                      <button onClick={() => setShowLoyaltyDeleteConfirm(false)} className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl">Cancel</button>
+                      <button onClick={handleDeleteLoyalty} disabled={isDeletingLoyalty} className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 disabled:opacity-50">
                         <Trash2 className="w-3.5 h-3.5" /> {isDeletingLoyalty ? "Deleting..." : "Yes, Delete"}
                       </button>
                     </div>

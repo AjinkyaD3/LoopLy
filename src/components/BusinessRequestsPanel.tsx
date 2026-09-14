@@ -12,7 +12,13 @@ import {
   FileCheck,
   Award,
   AlertTriangle,
+  ClipboardList,
 } from "lucide-react";
+import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Card from "@/components/ui/Card";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface VRCustomer {
   id: string;
@@ -98,9 +104,9 @@ export default function BusinessRequestsPanel({
         const msg =
           decision === "APPROVED"
             ? data.rewardEarned
-              ? `✅ Approved! Reward earned. Claim Code: ${data.claimCode}`
-              : `✅ Approved! Loyalty card ${data.cardPosition}/${requiredVisits} awarded.`
-            : "❌ Request rejected.";
+              ? `Approved. Reward earned — claim code: ${data.claimCode}`
+              : `Approved. Loyalty card ${data.cardPosition}/${requiredVisits} awarded.`
+            : "Request rejected.";
         setFeedback({ id: requestId, type: "success", msg });
         fetchRequests();
         router.refresh();
@@ -121,9 +127,9 @@ export default function BusinessRequestsPanel({
             key={s}
             type="button"
             onClick={() => setStatus(s)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
               status === s
-                ? "bg-indigo-600 text-white shadow-xs"
+                ? "bg-primary-600 text-white shadow-sm"
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
@@ -133,7 +139,7 @@ export default function BusinessRequestsPanel({
         <button
           type="button"
           onClick={fetchRequests}
-          className="ml-auto p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+          className="ml-auto p-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
           title="Refresh"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -145,13 +151,15 @@ export default function BusinessRequestsPanel({
           <Loader2 className="w-4 h-4 animate-spin" /> Loading requests…
         </div>
       ) : requests.length === 0 ? (
-        <div className="py-10 text-center text-xs text-slate-400">
-          No {status.toLowerCase()} requests for {businessName}.
-        </div>
+        <EmptyState
+          icon={ClipboardList}
+          title="No requests yet"
+          message={`No ${status.toLowerCase()} requests for ${businessName}.`}
+        />
       ) : (
         <div className="space-y-4">
           {requests.map((r) => (
-            <div key={r.id} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs">
+            <Card key={r.id} className="space-y-4">
               {/* Request header */}
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-0.5">
@@ -167,25 +175,25 @@ export default function BusinessRequestsPanel({
 
                 <div className="flex flex-col items-end gap-1.5">
                   {/* Method badge */}
-                  <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold flex items-center gap-1">
+                  <Badge variant="neutral" className="gap-1">
                     {r.method === "BILL" ? <Receipt className="w-2.5 h-2.5" /> : <FileCheck className="w-2.5 h-2.5" />}
                     {r.method === "BILL" ? "Bill Upload" : "Visit Conf."}
-                  </span>
+                  </Badge>
                   {/* Status badge */}
                   {r.status === "PENDING" && (
-                    <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold flex items-center gap-1">
+                    <Badge variant="warning" className="gap-1">
                       <Clock className="w-2.5 h-2.5" /> Pending
-                    </span>
+                    </Badge>
                   )}
                   {r.status === "APPROVED" && (
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold flex items-center gap-1">
+                    <Badge variant="success" className="gap-1">
                       <CheckCircle2 className="w-2.5 h-2.5" /> Approved
-                    </span>
+                    </Badge>
                   )}
                   {r.status === "REJECTED" && (
-                    <span className="px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold flex items-center gap-1">
+                    <Badge variant="danger" className="gap-1">
                       <XCircle className="w-2.5 h-2.5" /> Rejected
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>
@@ -193,7 +201,7 @@ export default function BusinessRequestsPanel({
               {/* Membership progress info */}
               <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
                 <span className="flex items-center gap-1.5">
-                  <Award className="w-3.5 h-3.5 text-indigo-500" />
+                  <Award className="w-3.5 h-3.5 text-primary-500" />
                   Loyalty card progress
                 </span>
                 <span className="font-bold text-slate-800">
@@ -203,7 +211,7 @@ export default function BusinessRequestsPanel({
 
               {/* Duplicate-bill warning — a flag for owner review, never an auto-reject */}
               {r.duplicateSuspected && (
-                <div className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200 flex items-center gap-2">
+                <div className="text-[11px] text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200 flex items-center gap-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
                   <span>This bill number or photo closely matches another request from the last 90 days. Review before approving.</span>
                 </div>
@@ -211,16 +219,16 @@ export default function BusinessRequestsPanel({
 
               {/* Bill image preview link */}
               {r.billImagePath && (
-                <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-center justify-between gap-2">
+                <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2">
                   <span className="truncate">
-                    📎 Bill{r.billNumber ? ` #${r.billNumber}` : ""}: <span className="font-mono text-slate-500">{r.billImagePath}</span>
+                    Bill{r.billNumber ? ` #${r.billNumber}` : ""}: <span className="font-mono text-slate-500">{r.billImagePath}</span>
                   </span>
                   {r.signedBillUrl && (
                     <a
                       href={r.signedBillUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100 whitespace-nowrap"
+                      className="px-2 py-1 rounded bg-primary-50 text-primary-700 font-semibold hover:bg-primary-100 whitespace-nowrap"
                     >
                       View Bill →
                     </a>
@@ -230,7 +238,7 @@ export default function BusinessRequestsPanel({
 
               {/* Rejection reason */}
               {r.rejectionReason && (
-                <p className="text-[11px] text-rose-600 bg-rose-50 p-2.5 rounded-lg border border-rose-100">
+                <p className="text-[11px] text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-100">
                   Rejection reason: {r.rejectionReason}
                 </p>
               )}
@@ -245,40 +253,37 @@ export default function BusinessRequestsPanel({
               {/* Actions for PENDING */}
               {r.status === "PENDING" && (
                 <div className="space-y-3 pt-1 border-t border-slate-100">
-                  <input
+                  <Input
                     type="text"
                     placeholder="Rejection reason (optional)"
                     value={rejectReason[r.id] ?? ""}
                     onChange={(e) => setRejectReason((prev) => ({ ...prev, [r.id]: e.target.value }))}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className="bg-slate-50"
                   />
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="button"
-                      disabled={actionLoading === r.id}
+                      loading={actionLoading === r.id}
                       onClick={() => handleAction(r.id, "APPROVED")}
-                      className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
                     >
-                      {actionLoading === r.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                      )}
+                      <CheckCircle2 className="w-3.5 h-3.5" />
                       Approve Visit
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="secondary"
                       disabled={actionLoading === r.id}
                       onClick={() => handleAction(r.id, "REJECTED")}
-                      className="flex-1 py-2.5 px-3 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 font-semibold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="flex-1 text-rose-600 border-rose-200 hover:bg-rose-50"
                     >
                       <XCircle className="w-3.5 h-3.5" />
                       Reject
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}

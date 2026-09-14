@@ -11,10 +11,10 @@ export default function PrivacyPage() {
             <span className="text-sm font-semibold">Back to Home</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-6 h-6 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-sm">
               <Sparkles className="w-3 h-3" />
             </div>
-            <span className="text-sm font-black tracking-tight text-slate-900">
+            <span className="font-display text-sm font-black tracking-tight text-slate-900">
               Looply
             </span>
           </div>
@@ -22,9 +22,9 @@ export default function PrivacyPage() {
       </header>
 
       <main className="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-1">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 sm:p-12 space-y-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 sm:p-12 space-y-8">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Privacy Policy</h1>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-slate-900">Privacy Policy</h1>
             <p className="mt-2 text-sm text-slate-500">Last Updated: September 2026</p>
           </div>
           

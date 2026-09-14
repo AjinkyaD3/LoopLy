@@ -104,7 +104,7 @@ export default function ScratchCardComponent({ revealedPrize, onScratchComplete 
   };
 
   return (
-    <div className="relative w-full h-40 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center select-none touch-none">
+    <div className="relative w-full h-40 bg-gradient-to-br from-primary-500 to-accent-600 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center select-none touch-none">
       {/* Underlying Prize Layer */}
       <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
         {isRevealed ? (
@@ -113,7 +113,7 @@ export default function ScratchCardComponent({ revealedPrize, onScratchComplete 
             <p className="text-white font-black text-lg leading-tight">{revealedPrize}</p>
           </div>
         ) : (
-          <div className="text-indigo-200">
+          <div className="text-primary-200">
             <Sparkles className="w-8 h-8 mx-auto opacity-50" />
             <span className="sr-only">{revealedPrize}</span>
           </div>

@@ -234,7 +234,7 @@ export default function BusinessDashboardTabs({
   return (
     <div className="space-y-6">
       {scratchNoticeVisible && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start justify-between gap-3 shadow-xs">
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start justify-between gap-3 shadow-sm">
           <div className="flex items-start gap-2.5 text-xs">
             <Sparkles className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
@@ -249,7 +249,7 @@ export default function BusinessDashboardTabs({
             type="button"
             onClick={handleDismissScratchNotice}
             disabled={dismissingNotice}
-            className="p-1 rounded-lg hover:bg-amber-100 text-amber-700 transition-colors flex-shrink-0"
+            className="p-1 rounded-xl hover:bg-amber-100 text-amber-700 transition-colors flex-shrink-0"
             title="Dismiss"
           >
             {dismissingNotice ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
@@ -264,7 +264,7 @@ export default function BusinessDashboardTabs({
           onClick={() => setActiveTab("overview")}
           className={`py-2.5 px-4 rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "overview"
-              ? "bg-white border border-slate-200 border-b-transparent text-indigo-600 font-bold shadow-xs"
+              ? "bg-white border border-slate-200 border-b-transparent text-primary-600 font-bold shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
@@ -277,7 +277,7 @@ export default function BusinessDashboardTabs({
           onClick={() => setActiveTab("requests")}
           className={`py-2.5 px-4 rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "requests"
-              ? "bg-white border border-slate-200 border-b-transparent text-indigo-600 font-bold shadow-xs"
+              ? "bg-white border border-slate-200 border-b-transparent text-primary-600 font-bold shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
@@ -290,7 +290,7 @@ export default function BusinessDashboardTabs({
           onClick={() => setActiveTab("members")}
           className={`py-2.5 px-4 rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "members"
-              ? "bg-white border border-slate-200 border-b-transparent text-indigo-600 font-bold shadow-xs"
+              ? "bg-white border border-slate-200 border-b-transparent text-primary-600 font-bold shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
@@ -303,7 +303,7 @@ export default function BusinessDashboardTabs({
           onClick={() => setActiveTab("rewards")}
           className={`py-2.5 px-4 rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "rewards"
-              ? "bg-white border border-slate-200 border-b-transparent text-indigo-600 font-bold shadow-xs"
+              ? "bg-white border border-slate-200 border-b-transparent text-primary-600 font-bold shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
@@ -316,7 +316,7 @@ export default function BusinessDashboardTabs({
           onClick={() => setActiveTab("qr")}
           className={`py-2.5 px-4 rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "qr"
-              ? "bg-white border border-slate-200 border-b-transparent text-indigo-600 font-bold shadow-xs"
+              ? "bg-white border border-slate-200 border-b-transparent text-primary-600 font-bold shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
@@ -329,7 +329,7 @@ export default function BusinessDashboardTabs({
           onClick={() => setActiveTab("loyalty")}
           className={`py-2.5 px-4 rounded-t-xl transition-colors whitespace-nowrap flex items-center gap-1.5 ${
             activeTab === "loyalty"
-              ? "bg-white border border-slate-200 border-b-transparent text-indigo-600 font-bold shadow-xs"
+              ? "bg-white border border-slate-200 border-b-transparent text-primary-600 font-bold shadow-sm"
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
@@ -346,10 +346,10 @@ export default function BusinessDashboardTabs({
           />
 
           <div className="grid md:grid-cols-12 gap-6 items-start">
-            <div className="md:col-span-7 p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+            <div className="md:col-span-7 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 block">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary-600 block">
                     Active Visits Program
                   </span>
                   <h3 className="text-lg font-bold text-slate-900 leading-tight">
@@ -399,7 +399,7 @@ export default function BusinessDashboardTabs({
                 <button
                   type="button"
                   onClick={() => setActiveTab("qr")}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
                 >
                   <QrCode className="w-3.5 h-3.5" />
                   View Counter QR
@@ -407,7 +407,7 @@ export default function BusinessDashboardTabs({
               </div>
             </div>
 
-            <div className="md:col-span-5 p-6 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4 text-center">
+            <div className="md:col-span-5 p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 text-center">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
                 Permanent Counter QR
               </span>
@@ -419,7 +419,7 @@ export default function BusinessDashboardTabs({
               <button
                 type="button"
                 onClick={() => setActiveTab("qr")}
-                className="w-full py-2.5 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-xl transition-colors"
+                className="w-full py-2.5 px-3 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-semibold rounded-xl transition-colors"
               >
                 Open Full QR Display & Download →
               </button>
@@ -481,7 +481,7 @@ export default function BusinessDashboardTabs({
         <div className="space-y-6 max-w-2xl">
                     {/* Active Program Details (if any) */}
           {activeProgram ? (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 block">
@@ -500,7 +500,7 @@ export default function BusinessDashboardTabs({
                       <button
                         type="button"
                         onClick={startEditing}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-lg transition-colors"
+                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold rounded-xl transition-colors"
                       >
                         Edit
                       </button>
@@ -508,7 +508,7 @@ export default function BusinessDashboardTabs({
                         type="button"
                         onClick={handleEndProgram}
                         disabled={savingLoyalty}
-                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold rounded-xl transition-colors flex items-center gap-1"
                       >
                         {savingLoyalty ? <Loader2 className="w-3 h-3 animate-spin" /> : <AlertCircle className="w-3 h-3" />}
                         End Program
@@ -519,7 +519,7 @@ export default function BusinessDashboardTabs({
                       <button
                         type="button"
                         onClick={() => setIsEditingActive(false)}
-                        className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 text-[11px] font-bold rounded-lg transition-colors"
+                        className="px-3 py-1.5 text-slate-600 hover:bg-slate-100 text-[11px] font-bold rounded-xl transition-colors"
                       >
                         Cancel
                       </button>
@@ -527,7 +527,7 @@ export default function BusinessDashboardTabs({
                         type="button"
                         onClick={handleSaveEdits}
                         disabled={savingLoyalty}
-                        className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                        className="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-[11px] font-bold rounded-xl transition-colors flex items-center gap-1"
                       >
                         {savingLoyalty && <Loader2 className="w-3 h-3 animate-spin" />}
                         Save Changes
@@ -544,7 +544,7 @@ export default function BusinessDashboardTabs({
                       type="checkbox"
                       checked={editIsActive}
                       onChange={(e) => setEditIsActive(e.target.checked)}
-                      className="rounded text-indigo-600 focus:ring-indigo-500"
+                      className="rounded text-primary-600 focus:ring-primary-500"
                     />
                     <span>Loyalty program is active and accepting visits</span>
                   </label>
@@ -559,13 +559,13 @@ export default function BusinessDashboardTabs({
                             value={editingReward.title}
                             onChange={(e) => handleEditRewardChange(reward.id, "title", e.target.value)}
                             placeholder="Reward title"
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-indigo-400"
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-primary-400"
                           />
                           <input
                             value={editingReward.description || ""}
                             onChange={(e) => handleEditRewardChange(reward.id, "description", e.target.value)}
                             placeholder="Short description (optional)"
-                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-indigo-400"
+                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs outline-none focus:border-primary-400"
                           />
                         </div>
                       );
@@ -597,7 +597,7 @@ export default function BusinessDashboardTabs({
               )}
             </div>
           ) : (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
               <div>
                 <h3 className="text-base font-bold text-slate-900">Start New Loyalty Program</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -613,7 +613,7 @@ export default function BusinessDashboardTabs({
                     required
                     value={newProgramName}
                     onChange={(e) => setNewProgramName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                   />
                 </div>
 
@@ -625,7 +625,7 @@ export default function BusinessDashboardTabs({
                       required
                       value={newStartsAt}
                       onChange={(e) => setNewStartsAt(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                     />
                   </div>
                   <div>
@@ -635,7 +635,7 @@ export default function BusinessDashboardTabs({
                       required
                       value={newEndsAt}
                       onChange={(e) => setNewEndsAt(e.target.value)}
-                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                     />
                   </div>
                 </div>
@@ -648,7 +648,7 @@ export default function BusinessDashboardTabs({
                     max="20"
                     value={newRequiredVisits}
                     onChange={(e) => setNewRequiredVisits(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                   />
                 </div>
 
@@ -667,7 +667,7 @@ export default function BusinessDashboardTabs({
                           type="button"
                           onClick={() => toggleNewReward(position)}
                           className={`rounded-xl border p-2 text-xs font-bold transition-colors ${
-                            selected ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                            selected ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-200 text-slate-600 hover:bg-slate-50"
                           }`}
                         >
                           {position}
@@ -684,14 +684,14 @@ export default function BusinessDashboardTabs({
                         value={reward.title}
                         onChange={(e) => changeNewReward(reward.cardPosition, "title", e.target.value)}
                         placeholder="Reward title"
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
                         required
                       />
                       <input
                         value={reward.description}
                         onChange={(e) => changeNewReward(reward.cardPosition, "description", e.target.value)}
                         placeholder="Short description (optional)"
-                        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-xs"
+                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
                       />
                     </div>
                   ))}
@@ -701,7 +701,7 @@ export default function BusinessDashboardTabs({
                   <button
                     type="submit"
                     disabled={savingLoyalty}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
                   >
                     {savingLoyalty ? (
                       <>
@@ -736,7 +736,7 @@ export default function BusinessDashboardTabs({
 
           {/* Historical Programs List */}
           {historicalPrograms.length > 0 && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs mt-6 space-y-4">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mt-6 space-y-4">
               <h3 className="text-base font-bold text-slate-900">Program History</h3>
               <div className="space-y-4">
                 {historicalPrograms.map((program) => (
@@ -748,7 +748,7 @@ export default function BusinessDashboardTabs({
                           {new Date(program.startsAt).toLocaleDateString()} – {program.endedManuallyAt ? new Date(program.endedManuallyAt).toLocaleDateString() : new Date(program.endsAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <span className="px-2 py-1 bg-slate-200 text-slate-600 text-[10px] font-bold rounded-md">Ended</span>
+                      <span className="px-2 py-1 bg-slate-200 text-slate-600 text-[10px] font-bold rounded-xl">Ended</span>
                     </div>
                     <div className="text-xs text-slate-600 flex flex-col gap-1">
                       <span>Required Visits: {program.requiredVisits}</span>

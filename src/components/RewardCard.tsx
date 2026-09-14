@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Award } from "lucide-react";
 import ScratchCardComponent from "./ScratchCardComponent";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
 
 interface RewardProps {
   reward: any;
@@ -20,7 +22,7 @@ export default function RewardCard({ reward }: RewardProps) {
   const showScratchCard = reward.type === "SCRATCH_CARD" && !isScratched;
 
   return (
-    <div className="bg-white rounded-2xl border border-emerald-200 p-5 shadow-xs">
+    <Card className="border-emerald-200">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 w-full">
           <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
@@ -44,16 +46,14 @@ export default function RewardCard({ reward }: RewardProps) {
           </div>
         </div>
         {!showScratchCard && (
-          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold whitespace-nowrap">
-            Ready to Claim
-          </span>
+          <Badge variant="success" className="whitespace-nowrap">Ready to Claim</Badge>
         )}
       </div>
       {!showScratchCard && (
         <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-xs text-emerald-800 text-center font-medium">
-          🎉 Show this screen to the business owner to claim your reward!
+          Show this screen to the business owner to claim your reward.
         </div>
       )}
-    </div>
+    </Card>
   );
 }

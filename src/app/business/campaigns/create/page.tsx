@@ -6,11 +6,12 @@ import Link from "next/link";
 import {
   Sparkles,
   ArrowRight,
-  Loader2,
   AlertCircle,
   ArrowLeft,
   Plus,
 } from "lucide-react";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 export default function CreateCampaignPage() {
   const router = useRouter();
@@ -109,18 +110,18 @@ export default function CreateCampaignPage() {
             <span className="text-sm font-semibold">Back to Campaigns</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-6 h-6 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-sm">
               <Sparkles className="w-3 h-3" />
             </div>
-            <span className="text-sm font-black tracking-tight text-slate-900">Looply</span>
+            <span className="font-display text-sm font-black tracking-tight text-slate-900">Looply</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           <div className="px-6 py-8 sm:p-10 border-b border-slate-100 bg-slate-50/50">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">New Campaign</h1>
+            <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">New Campaign</h1>
             <p className="mt-2 text-sm text-slate-500 leading-relaxed max-w-lg">
               A time-boxed promotional scratch card, independent of your loyalty program. Anyone
               holding its QR can play — distribute it however you like.
@@ -136,47 +137,32 @@ export default function CreateCampaignPage() {
                 </div>
               )}
 
-              <div>
-                <label htmlFor="campaign-name" className="block text-xs font-semibold text-slate-800 mb-1">
-                  Campaign Name <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  id="campaign-name"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Diwali 2026"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
-                />
-              </div>
+              <Input
+                id="campaign-name"
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Diwali 2026"
+                label={<>Campaign Name <span className="text-rose-500">*</span></>}
+              />
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="starts-at" className="block text-xs font-semibold text-slate-800 mb-1">
-                    Starts <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    id="starts-at"
-                    type="datetime-local"
-                    required
-                    value={startsAt}
-                    onChange={(e) => setStartsAt(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="ends-at" className="block text-xs font-semibold text-slate-800 mb-1">
-                    Ends <span className="text-slate-400 font-normal">(Optional — runs until you end it)</span>
-                  </label>
-                  <input
-                    id="ends-at"
-                    type="datetime-local"
-                    value={endsAt}
-                    onChange={(e) => setEndsAt(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                  />
-                </div>
+                <Input
+                  id="starts-at"
+                  type="datetime-local"
+                  required
+                  value={startsAt}
+                  onChange={(e) => setStartsAt(e.target.value)}
+                  label={<>Starts <span className="text-rose-500">*</span></>}
+                />
+                <Input
+                  id="ends-at"
+                  type="datetime-local"
+                  value={endsAt}
+                  onChange={(e) => setEndsAt(e.target.value)}
+                  label={<>Ends <span className="text-slate-400 font-normal">(Optional)</span></>}
+                />
               </div>
 
               <div className="space-y-3 pt-4 border-t border-slate-200 mt-6">
@@ -203,41 +189,30 @@ export default function CreateCampaignPage() {
                         )}
                       </div>
                       <div className="grid grid-cols-3 gap-3">
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-800 mb-1">Title</label>
-                          <input
-                            type="text"
-                            required
-                            value={prize.title}
-                            onChange={(e) => handlePrizeChange(idx, "title", e.target.value)}
-                            placeholder="e.g. Free Coffee"
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-800 mb-1">
-                            Weight <span className="text-indigo-600 font-normal">({percentage}%)</span>
-                          </label>
-                          <input
-                            type="number"
-                            min={1}
-                            required
-                            value={prize.weight}
-                            onChange={(e) => handlePrizeChange(idx, "weight", parseInt(e.target.value) || 1)}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-slate-800 mb-1">Total Stock</label>
-                          <input
-                            type="number"
-                            min={1}
-                            required
-                            value={prize.totalStock}
-                            onChange={(e) => handlePrizeChange(idx, "totalStock", parseInt(e.target.value) || 1)}
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
-                          />
-                        </div>
+                        <Input
+                          type="text"
+                          required
+                          value={prize.title}
+                          onChange={(e) => handlePrizeChange(idx, "title", e.target.value)}
+                          placeholder="e.g. Free Coffee"
+                          label="Title"
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          required
+                          value={prize.weight}
+                          onChange={(e) => handlePrizeChange(idx, "weight", parseInt(e.target.value) || 1)}
+                          label={<>Weight <span className="text-primary-600 font-normal">({percentage}%)</span></>}
+                        />
+                        <Input
+                          type="number"
+                          min={1}
+                          required
+                          value={prize.totalStock}
+                          onChange={(e) => handlePrizeChange(idx, "totalStock", parseInt(e.target.value) || 1)}
+                          label="Total Stock"
+                        />
                       </div>
                     </div>
                   );
@@ -245,7 +220,7 @@ export default function CreateCampaignPage() {
                 <button
                   type="button"
                   onClick={handleAddPrize}
-                  className="w-full py-2 border border-dashed border-slate-300 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-indigo-600 transition-colors flex items-center justify-center gap-1"
+                  className="w-full py-2 border border-dashed border-slate-300 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-primary-600 transition-colors flex items-center justify-center gap-1"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add Prize
@@ -253,23 +228,16 @@ export default function CreateCampaignPage() {
               </div>
 
               <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2"
-                >
+                <Button type="submit" loading={loading} size="lg" fullWidth>
                   {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Creating Campaign...
-                    </>
+                    "Creating Campaign..."
                   ) : (
                     <>
                       Create Campaign
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

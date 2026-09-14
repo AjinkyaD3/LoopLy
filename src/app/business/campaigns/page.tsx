@@ -27,17 +27,17 @@ export default async function BusinessCampaignsPage() {
             <span className="text-sm font-semibold">Back to Dashboard</span>
           </Link>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-6 h-6 rounded-xl bg-primary-600 text-white flex items-center justify-center shadow-sm">
               <Sparkles className="w-3 h-3" />
             </div>
-            <span className="text-sm font-black tracking-tight text-slate-900">Looply</span>
+            <span className="font-display text-sm font-black tracking-tight text-slate-900">Looply</span>
           </div>
         </div>
       </header>
 
       <main className="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Campaigns</h1>
+          <h1 className="font-display text-2xl font-bold text-slate-900 tracking-tight">Campaigns</h1>
           <p className="mt-1 text-sm text-slate-500">{business.name}</p>
         </div>
         <BusinessCampaignsPanel />

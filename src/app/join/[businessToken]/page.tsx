@@ -33,16 +33,16 @@ export default async function PublicJoinPage({ params }: JoinPageProps) {
 
   return (
     <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-6 py-12 bg-slate-50 min-h-screen">
-      <div className="w-full max-w-md bg-white sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-sm p-6 sm:p-8 space-y-6">
+      <div className="w-full max-w-md bg-white sm:rounded-2xl sm:border sm:border-slate-200 sm:shadow-sm p-6 sm:p-8 space-y-6">
         {/* Header */}
         <header className="pb-4 text-center border-b border-slate-100">
-          <Link href="/" className="inline-flex items-center gap-2 text-indigo-700 font-bold text-sm mb-4">
+          <Link href="/" className="inline-flex items-center gap-2 text-primary-700 font-bold text-sm mb-4">
             <Sparkles className="w-4 h-4" /> Looply
           </Link>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-semibold mb-3">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary-700 text-xs font-semibold mb-3">
             Official Loyalty Program
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{name}</h1>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-slate-900">{name}</h1>
           <p className="mt-1 text-xs text-slate-500">{program.programName}</p>
         </header>
 
@@ -71,7 +71,7 @@ function NotFoundState() {
         <div className="pt-4">
           <Link
             href="/"
-            className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-xl transition-colors"
           >
             Go to Looply Home
           </Link>

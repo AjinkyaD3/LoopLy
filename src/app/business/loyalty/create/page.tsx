@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 type CardReward = { cardPosition: number; title: string; description: string };
 
@@ -71,24 +73,89 @@ export default function CreateLoyaltyProgramPage() {
   }
 
   return (
-    <main className="mx-auto max-w-2xl p-6 space-y-6">
-      <Link href="/business" className="text-sm text-indigo-600">← Back to dashboard</Link>
+    <main className="mx-auto max-w-2xl p-4 py-6 sm:p-6 sm:py-8 space-y-6">
+      <Link href="/business" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+        ← Back to dashboard
+      </Link>
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Create loyalty card</h1>
+        <h1 className="font-display text-2xl font-bold text-slate-900">Create loyalty card</h1>
         <p className="mt-1 text-sm text-slate-600">Your shop QR stays the same. Customers scanning it see this current loyalty card.</p>
       </div>
-      <form onSubmit={submit} className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <label className="block text-sm font-medium">Program name<input value={programName} onChange={(e) => setProgramName(e.target.value)} className="mt-1 w-full rounded-lg border p-2" required /></label>
+      <form onSubmit={submit} className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
+        <Input
+          label="Program name"
+          value={programName}
+          onChange={(e) => setProgramName(e.target.value)}
+          required
+        />
         <div className="grid grid-cols-2 gap-4">
-          <label className="text-sm font-medium">Starts<input type="date" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className="mt-1 w-full rounded-lg border p-2" required /></label>
-          <label className="text-sm font-medium">Ends<input type="date" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className="mt-1 w-full rounded-lg border p-2" required /></label>
+          <Input
+            type="date"
+            label="Starts"
+            value={startsAt}
+            onChange={(e) => setStartsAt(e.target.value)}
+            required
+          />
+          <Input
+            type="date"
+            label="Ends"
+            value={endsAt}
+            onChange={(e) => setEndsAt(e.target.value)}
+            required
+          />
         </div>
-        <label className="block text-sm font-medium">Cards to collect<input type="number" min="2" max="20" value={requiredVisits} onChange={(e) => setRequiredVisits(Number(e.target.value))} className="mt-1 w-full rounded-lg border p-2" /></label>
-        <section className="space-y-3"><div><h2 className="font-semibold">Choose reward positions</h2><p className="text-sm text-slate-600">A customer receives a loyalty card for every approved purchase. Select the card positions that issue rewards.</p></div>
-          <div className="grid grid-cols-5 gap-2">{positions.map((position) => { const selected = rewards.some((reward) => reward.cardPosition === position); return <button key={position} type="button" onClick={() => toggleReward(position)} className={`rounded-xl border p-3 text-sm font-bold ${selected ? "border-indigo-600 bg-indigo-50 text-indigo-700" : "border-slate-200"}`}>{position}{selected ? " 🎁" : ""}</button>; })}</div>
-          {rewards.filter((reward) => reward.cardPosition <= requiredVisits).map((reward) => <div key={reward.cardPosition} className="rounded-xl bg-slate-50 p-3 space-y-2"><p className="text-sm font-semibold">Reward on card {reward.cardPosition}</p><input value={reward.title} onChange={(e) => changeReward(reward.cardPosition, "title", e.target.value)} placeholder="Reward title" className="w-full rounded-lg border p-2" required /><input value={reward.description} onChange={(e) => changeReward(reward.cardPosition, "description", e.target.value)} placeholder="Short description (optional)" className="w-full rounded-lg border p-2" /></div>)}</section>
+        <Input
+          type="number"
+          min="2"
+          max="20"
+          label="Cards to collect"
+          value={requiredVisits}
+          onChange={(e) => setRequiredVisits(Number(e.target.value))}
+        />
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Choose reward positions</h2>
+            <p className="text-sm text-slate-600">A customer receives a loyalty card for every approved purchase. Select the card positions that issue rewards.</p>
+          </div>
+          <div className="grid grid-cols-5 gap-2">
+            {positions.map((position) => {
+              const selected = rewards.some((reward) => reward.cardPosition === position);
+              return (
+                <button
+                  key={position}
+                  type="button"
+                  onClick={() => toggleReward(position)}
+                  className={`rounded-xl border p-3 text-sm font-bold transition-colors ${
+                    selected ? "border-primary-600 bg-primary-50 text-primary-700" : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {position}
+                  {selected ? " 🎁" : ""}
+                </button>
+              );
+            })}
+          </div>
+          {rewards.filter((reward) => reward.cardPosition <= requiredVisits).map((reward) => (
+            <div key={reward.cardPosition} className="space-y-2 rounded-xl bg-slate-50 p-3 border border-slate-200">
+              <p className="text-sm font-semibold text-slate-800">Reward on card {reward.cardPosition}</p>
+              <Input
+                value={reward.title}
+                onChange={(e) => changeReward(reward.cardPosition, "title", e.target.value)}
+                placeholder="Reward title"
+                required
+              />
+              <Input
+                value={reward.description}
+                onChange={(e) => changeReward(reward.cardPosition, "description", e.target.value)}
+                placeholder="Short description (optional)"
+              />
+            </div>
+          ))}
+        </section>
         {error && <p className="text-sm text-rose-600">{error}</p>}
-        <button disabled={saving} className="rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white disabled:opacity-50">{saving ? "Creating…" : "Create loyalty card"}</button>
+        <Button type="submit" loading={saving} size="lg">
+          {saving ? "Creating…" : "Create loyalty card"}
+        </Button>
       </form>
     </main>
   );

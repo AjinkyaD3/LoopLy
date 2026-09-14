@@ -9,11 +9,11 @@ import {
   Clock,
   RefreshCw,
   Loader2,
-  Calendar,
   CheckCircle2,
   Sparkles,
   ArrowRight,
 } from "lucide-react";
+import Card from "@/components/ui/Card";
 
 interface AnalyticsMetrics {
   totalMembers: number;
@@ -66,7 +66,7 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
   if (loading && !metrics) {
     return (
       <div className="flex items-center justify-center py-16 text-slate-400 text-xs gap-2">
-        <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> Loading business analytics…
+        <Loader2 className="w-4 h-4 animate-spin text-primary-600" /> Loading business analytics…
       </div>
     );
   }
@@ -75,7 +75,7 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
     <div className="space-y-6">
       {/* Pending Requests Alert */}
       {metrics && metrics.pendingRequestsCount > 0 && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
           <div className="flex items-center gap-2.5 text-xs font-semibold">
             <Clock className="w-4 h-4 text-amber-600 flex-shrink-0" />
             <span>
@@ -87,7 +87,7 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
             <button
               type="button"
               onClick={() => onNavigateToTab("requests")}
-              className="py-1.5 px-3.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold text-xs rounded-xl transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-xs"
+              className="py-1.5 px-3.5 bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white font-semibold text-xs rounded-xl transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap shadow-sm"
             >
               Review Requests
               <ArrowRight className="w-3.5 h-3.5" />
@@ -99,10 +99,10 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Members */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Club Members</span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center">
               <Users className="w-4 h-4" />
             </div>
           </div>
@@ -114,10 +114,10 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
               {metrics?.repeatRate ?? 0}% repeat customer rate
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Total Visits */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Verified Visits</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -132,10 +132,10 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
               +{metrics?.visitsLast30Days ?? 0} in last 30 days
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Active Rewards */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Ready to Claim</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -150,10 +150,10 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
               Active customer rewards
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Rewards Redeemed */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+        <Card className="flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Total Redeemed</span>
             <div className="w-8 h-8 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
@@ -168,15 +168,15 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
               {metrics?.rewardsIssued ?? 0} total issued
             </p>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Activity Timeline */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs space-y-4">
+      <Card className="space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-indigo-600" />
+              <Sparkles className="w-4 h-4 text-primary-600" />
               Live Customer Activity
             </h3>
             <p className="text-[11px] text-slate-500 mt-0.5">
@@ -207,9 +207,9 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
               >
                 <div className="flex items-start gap-2.5">
                   <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-white ${
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 text-white ${
                       item.type === "JOIN"
-                        ? "bg-indigo-600"
+                        ? "bg-primary-600"
                         : item.type === "VISIT"
                         ? "bg-emerald-600"
                         : "bg-amber-600"
@@ -241,7 +241,7 @@ export default function BusinessAnalyticsPanel({ onNavigateToTab }: BusinessAnal
             ))}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
