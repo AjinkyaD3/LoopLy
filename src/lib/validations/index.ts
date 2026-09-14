@@ -157,3 +157,12 @@ export const VerificationReviewSchema = z.object({
   status: z.enum(["APPROVED", "REJECTED"]),
   rejectionReason: z.string().max(300).optional(),
 });
+
+// =============================================================================
+// ADMIN / SUBSCRIPTION
+// =============================================================================
+
+export const SubscriptionUpdateSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE"]),
+  notes: z.string().max(500).optional(),
+});

@@ -3,7 +3,8 @@
 Looply is a **multi-tenant, mobile-first loyalty platform**. A business owner sets up a loyalty
 program and gets a permanent QR code; customers scan it, enter their mobile number, and earn
 visits toward a reward — **no customer account, no customer login, ever**. Business owners are
-the only authenticated role in the system.
+the primary authenticated role in the system, with a second internal-only `ADMIN` role layered on
+the same `User`/session table (see below).
 
 ## Stack
 
@@ -25,6 +26,12 @@ the only authenticated role in the system.
    entire customer journey lives at `/join/[businessToken]` (component: `JoinFlow.tsx`) and its
    API routes under `src/app/api/customer/*`.
 
+`ADMIN` is **not** a third customer-facing flow — it is a second `User.role` value on the same
+`User`/session table as business owners, with no separate login screen. It exists solely to run
+the internal `/admin` panel (manual subscription activation, `requireAdmin()` in `src/lib/auth.ts`).
+There is no self-serve way to become an admin; the only promotion path is
+`node scratch/make-admin.js <email>`, run manually against the real DB.
+
 Customer-login functionality was **deliberately and fully removed** in a past restructure (see
 `looply-complete-login-removal-prompt.md` for the historical rationale — kept for context, not as
 a live task list). **Do not reintroduce customer accounts, customer passwords, or a customer
@@ -39,8 +46,10 @@ src/
 │   │   ├── auth/                  # register, login, logout, me — BUSINESS OWNER ONLY
 │   │   ├── business/              # setup, loyalty, analytics, requests, members, rewards, account
 │   │   ├── customer/               # progress, visit, reward/claim-code, reward/instant-scratch, dashboard
+│   │   ├── admin/                  # ADMIN-only: list businesses, activate/deactivate subscriptions
 │   │   └── public/business/[businessToken]/  # public read-only business info for the join page
 │   ├── business/                  # business owner dashboard pages (auth-gated)
+│   ├── admin/                      # internal ADMIN-only subscription panel (requireAdmin())
 │   ├── join/[businessToken]/      # THE customer entry point (public, no auth)
 │   ├── legal/{privacy,terms}/     # static legal pages, versioned via src/lib/constants.ts
 │   ├── login/, register/          # business owner auth only
@@ -78,6 +87,11 @@ prisma/schema.prisma                 # source of truth for the data model
   `currentVisits`. See `src/app/api/business/requests/[requestId]/route.ts` for the reference
   implementation of this transaction pattern.
 - `Reward` — `STANDARD` (claim code) or `SCRATCH_CARD` (`ScratchCardPrize`, weighted random).
+- `Subscription` — one-to-one with `Business` (missing row means `INACTIVE`, don't assume
+  `Business` creation makes one). `status` is `ACTIVE`/`INACTIVE`, activated manually today via the
+  `/admin` panel (`activatedAt`/`activatedById` audit trail); shaped so automatic
+  payment-gateway-driven activation can be added later without a schema rework. Gates
+  `LoyaltyProgram` and `Campaign` creation only — not business setup or any read-only route.
 
 ## Conventions To Follow
 

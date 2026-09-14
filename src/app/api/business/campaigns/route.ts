@@ -16,6 +16,9 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const { business } = await requireOwnerBusiness();
+    if (business.subscription?.status !== "ACTIVE") {
+      throw new Error("SUBSCRIPTION_REQUIRED");
+    }
 
     const body = await request.json();
     const parsed = CampaignCreateSchema.safeParse(body);
@@ -49,6 +52,9 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN_NOT_BUSINESS_OWNER" || error.message === "NO_OWNED_BUSINESS") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (error.message === "SUBSCRIPTION_REQUIRED") {
+      return NextResponse.json({ error: "An active subscription is required to create a campaign." }, { status: 402 });
     }
     console.error("Create campaign error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

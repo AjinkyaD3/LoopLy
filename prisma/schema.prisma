@@ -46,6 +46,16 @@ enum WindowType {
   FIXED_PERIOD
 }
 
+enum UserRole {
+  BUSINESS_OWNER
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  ACTIVE
+}
+
 // -----------------------------------------------------------------------------
 // USER & AUTH
 // -----------------------------------------------------------------------------
@@ -55,6 +65,7 @@ model User {
   email        String   @unique
   passwordHash String
   name         String
+  role         UserRole @default(BUSINESS_OWNER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -68,6 +79,8 @@ model User {
   redeemedCampaignPrizes CampaignPlay[]    @relation("CampaignPrizeRedeemedBy")
   // Legal acceptances (Terms, Privacy)
   legalAcceptances       LegalAcceptance[]
+  // Subscriptions this admin manually activated/deactivated (audit trail)
+  activatedSubscriptions Subscription[]    @relation("SubscriptionActivatedBy")
 }
 
 model Session {
@@ -152,6 +165,7 @@ model Business {
   visitRequests    VisitRequest[]
   visits           Visit[]
   rewards          Reward[]
+  subscription     Subscription?
 
   @@index([ownerId])
   @@index([businessToken])
@@ -196,6 +210,28 @@ model LoyaltyProgram {
   scratchCardPrizes ScratchCardPrize[]
 
   @@index([businessId])
+}
+
+// -----------------------------------------------------------------------------
+// SUBSCRIPTION (Manual admin gating — payment-gateway automation is future work)
+// -----------------------------------------------------------------------------
+// Activated/deactivated by hand via the internal /admin panel today. Schema is shaped so an
+// automatic (payment-gateway-driven) activation flow can be added later without a rework.
+
+model Subscription {
+  id            String             @id @default(cuid())
+  businessId    String             @unique
+  business      Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status        SubscriptionStatus @default(INACTIVE)
+  activatedAt   DateTime?
+  activatedById String?
+  activatedBy   User?              @relation("SubscriptionActivatedBy", fields: [activatedById], references: [id], onDelete: SetNull)
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([businessId])
+  @@index([status])
 }
 
 // -----------------------------------------------------------------------------

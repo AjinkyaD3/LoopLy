@@ -16,6 +16,7 @@ export interface SafeUser {
   id: string;
   email: string;
   name: string;
+  role: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -79,6 +80,7 @@ export async function validateSession(sessionToken: string) {
           id: true,
           email: true,
           name: true,
+          role: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -171,7 +173,7 @@ export async function requireOwnerBusiness(clientProvidedBusinessId?: string) {
 
   const business = await prisma.business.findUnique({
     where: { ownerId: owner.id },
-    include: { loyaltyProgram: true },
+    include: { loyaltyProgram: true, subscription: true },
   });
 
   if (!business) {
@@ -184,4 +186,18 @@ export async function requireOwnerBusiness(clientProvidedBusinessId?: string) {
   }
 
   return { owner, business };
+}
+
+/**
+ * Enforces that the request is from an authenticated ADMIN.
+ * Admins are still User rows in the same table/session as business owners —
+ * there is no separate admin login. Throws "UNAUTHORIZED" (not authenticated) or
+ * "FORBIDDEN" (authenticated but not an admin).
+ */
+export async function requireAdmin(): Promise<SafeUser> {
+  const user = await requireBusinessOwner();
+  if (user.role !== "ADMIN") {
+    throw new Error("FORBIDDEN");
+  }
+  return user;
 }

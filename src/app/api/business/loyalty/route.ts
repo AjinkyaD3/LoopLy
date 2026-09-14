@@ -10,6 +10,9 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   try {
     const { business } = await requireOwnerBusiness();
+    if (business.subscription?.status !== "ACTIVE") {
+      throw new Error("SUBSCRIPTION_REQUIRED");
+    }
     const parsed = LoyaltyProgramSchema.safeParse(await request.json());
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
@@ -49,6 +52,9 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     if (["UNAUTHORIZED", "NO_OWNED_BUSINESS"].includes(error.message)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (error.message === "SUBSCRIPTION_REQUIRED") {
+      return NextResponse.json({ error: "An active subscription is required to create a loyalty program." }, { status: 402 });
     }
     console.error("Create loyalty program error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

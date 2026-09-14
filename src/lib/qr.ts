@@ -1,16 +1,36 @@
 import QRCode from "qrcode";
+import { headers } from "next/headers";
 
 /**
- * Returns the permanent public join URL for a business token.
- * Validates environment configuration safely.
+ * Resolves the app's public base URL. Prefers the incoming request's Host header (so the
+ * same deployment auto-adapts across environments — VPS, staging, prod — with no env var
+ * needed); falls back to NEXT_PUBLIC_APP_URL / Vercel env vars for contexts without a request
+ * (e.g. build-time), and finally to localhost for local dev.
  */
-export function getBusinessJoinUrl(businessToken: string): string {
+function resolveAppUrl(): string {
+  try {
+    const headersList = headers();
+    const host = headersList.get("x-forwarded-host") || headersList.get("host");
+    if (host) {
+      const proto = headersList.get("x-forwarded-proto") || (host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https");
+      return `${proto}://${host}`;
+    }
+  } catch {
+    // headers() throws outside a request scope (e.g. build-time) — fall through to env vars.
+  }
+
   const rawUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
   if (!rawUrl || typeof rawUrl !== "string" || rawUrl.trim() === "") {
     throw new Error("NEXT_PUBLIC_APP_URL is missing or invalid in environment configuration.");
   }
-  const appUrl = rawUrl.trim().replace(/\/$/, "");
-  return `${appUrl}/join/${businessToken}`;
+  return rawUrl.trim().replace(/\/$/, "");
+}
+
+/**
+ * Returns the permanent public join URL for a business token.
+ */
+export function getBusinessJoinUrl(businessToken: string): string {
+  return `${resolveAppUrl()}/join/${businessToken}`;
 }
 
 /**
@@ -18,12 +38,7 @@ export function getBusinessJoinUrl(businessToken: string): string {
  * URL — campaign QRs are disposable and distributed independently of the standee QR.
  */
 export function getCampaignPlayUrl(campaignToken: string): string {
-  const rawUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
-  if (!rawUrl || typeof rawUrl !== "string" || rawUrl.trim() === "") {
-    throw new Error("NEXT_PUBLIC_APP_URL is missing or invalid in environment configuration.");
-  }
-  const appUrl = rawUrl.trim().replace(/\/$/, "");
-  return `${appUrl}/campaign/${campaignToken}`;
+  return `${resolveAppUrl()}/campaign/${campaignToken}`;
 }
 
 /**
